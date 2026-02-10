@@ -1,13 +1,16 @@
 package coreParkingSystem;
 import java.util.*;
 
-public class Row {//10 spots per row
+public class Row {
     private ArrayList<ParkingSpot> spots;
     final int numOfSpots = 10;
 
+    public Row(int rNum, int floorNum){
+        initializeParkingSpot(floorNum, rNum);
+    }
     public void addSpotToRow(ParkingSpot ps){spots.add(ps);}
     public int getRowSize(){return spots.size();}
-    public void initializeParkingSpot(int floorNum, int rowNum){
+    private void initializeParkingSpot(int floorNum, int rowNum){
         String id = floorNum + "-" + rowNum + "-";
         for (int i = 0; i < numOfSpots; i++){
             if (i>=0 && i<=2){
