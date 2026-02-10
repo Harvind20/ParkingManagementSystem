@@ -9,21 +9,21 @@ public class Row {
         initializeParkingSpot(floorNum, rNum);
     }
     public void addSpotToRow(ParkingSpot ps){spots.add(ps);}
-    public int getRowSize(){return spots.size();}
+    public int getNumOfSpots(){return spots.size();}
     private void initializeParkingSpot(int floorNum, int rowNum){
         String id = floorNum + "-" + rowNum + "-";
         for (int i = 0; i < numOfSpots; i++){
             if (i>=0 && i<=2){
-                spots.add(new ParkingSpot(id+i, Global.Type.REGULAR, rowNum));
+                spots.add(new ParkingSpot(id+i, Global.Type.REGULAR, i));
             }
             else if (i>=3 && i<=5){
-                spots.add(new ParkingSpot(id+i, Global.Type.COMPACT, rowNum));
+                spots.add(new ParkingSpot(id+i, Global.Type.COMPACT, i));
             }
             else if(i>=6 && i<=7){
-                spots.add(new ParkingSpot(id+i, Global.Type.HANDICAPPED, rowNum));
+                spots.add(new ParkingSpot(id+i, Global.Type.HANDICAPPED, i));
             }
             else if(i>=8 && i<=9){
-                spots.add(new ParkingSpot(id+i, Global.Type.RESERVED, rowNum));
+                spots.add(new ParkingSpot(id+i, Global.Type.RESERVED, i));
             }
         }
     }
