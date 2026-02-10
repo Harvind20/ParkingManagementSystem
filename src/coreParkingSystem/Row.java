@@ -2,7 +2,7 @@ package coreParkingSystem;
 import java.util.*;
 
 public class Row {
-    private ArrayList<ParkingSpot> spots;
+    private ArrayList<ParkingSpot> spots = new ArrayList<ParkingSpot>();
     final int numOfSpots = 10;
 
     public Row(int rNum, int floorNum){

@@ -2,7 +2,7 @@ package coreParkingSystem;
 import java.util.*;
 
 public class Floor {
-    private ArrayList<Row> rows;
+    private ArrayList<Row> rows = new ArrayList<Row>();
     final int numOfRows = 4;
 
     public Floor(int floorNum){
