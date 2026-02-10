@@ -1,7 +1,7 @@
 package coreParkingSystem;
 import java.util.*;
 
-public class ParkingLot {
+public class ParkingLot {//3 floors
     private ArrayList<Floor> floors;
 
     private ParkingLot(){}

@@ -1,7 +1,7 @@
 package coreParkingSystem;
 import java.util.*;
 
-public class Floor {
+public class Floor {//4 row per floor
     private int floorNumber;
     private ArrayList<Row> rows;
 
