@@ -32,7 +32,7 @@ public class ParkingLot {
             int floorNum = Integer.parseInt(idData[0]) - 1;
             int rowNum = Integer.parseInt(idData[1]) - 1;
             int spotNum = Integer.parseInt(idData[2]) - 1;
-            if (floorNum < 1 && rowNum < 1 && spotNum < 1){
+            if (floorNum < 0 || rowNum < 0 || spotNum < 0){
                 return;
             }
             ParkingLot.getInstance().getFloor(floorNum).getRow(rowNum).getSpot(spotNum).setSpotStatus(status);
@@ -46,7 +46,7 @@ public class ParkingLot {
             int floorNum = Integer.parseInt(idData[0]) - 1;
             int rowNum = Integer.parseInt(idData[1]) - 1;
             int spotNum = Integer.parseInt(idData[2]) - 1;
-            if (floorNum < 1 && rowNum < 1 && spotNum < 1){
+            if (floorNum < 0 || rowNum < 0 || spotNum < 0){
                 return status;
             }
             status = ParkingLot.getInstance().getFloor(floorNum).getRow(rowNum).getSpot(spotNum).getSpotStatus();
@@ -60,7 +60,7 @@ public class ParkingLot {
             int floorNum = Integer.parseInt(idData[0]) - 1;
             int rowNum = Integer.parseInt(idData[1]) - 1;
             int spotNum = Integer.parseInt(idData[2]) - 1;
-            if (floorNum < 1 && rowNum < 1 && spotNum < 1){
+            if (floorNum < 0 || rowNum < 0 || spotNum < 0){
                 return;
             }
             ParkingLot.getInstance().getFloor(floorNum).getRow(rowNum).getSpot(spotNum).setSpotType(type);

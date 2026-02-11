@@ -5,8 +5,8 @@ public class ParkingSpot {
     private Type spotType;
     private Status spotStatus = Status.AVAILABLE;
     private int spotNumber;
-    enum Type{COMPACT,REGULAR,HANDICAPPED,RESERVED}
-    enum Status{AVAILABLE,OCCUPIED}
+    public enum Type{COMPACT,REGULAR,HANDICAPPED,RESERVED}
+    public enum Status{AVAILABLE,OCCUPIED}
 
     public ParkingSpot(String id, Type sType, int num){
         spotID = id; spotType = sType;
