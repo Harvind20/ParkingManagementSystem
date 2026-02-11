@@ -1,5 +1,6 @@
 package feeCalculator;
 
+import fineManagement.FineManager;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -32,19 +33,23 @@ public class ExitSystem {
         );
         System.out.println("Parking Fee: RM " + String.format("%.2f", parkingFee));
         
-        // 3. Check for fines
-        double fines = checkForFines(licensePlate, ticket);
-        System.out.println("Fines: RM " + String.format("%.2f", fines));
+        // 3. Check for fines (this parking session)
+        double currentFines = checkForFines(licensePlate, ticket);
+        System.out.println("Current Fines: RM " + String.format("%.2f", currentFines));
+
+        // 3B. Check UNPAID fines (previous sessions)
+        double unpaidFines = getUnpaidFines(licensePlate);
+        System.out.println("Unpaid Fines: RM " + String.format("%.2f", unpaidFines));
         
         // 4. Sum Total
-        double totalDue = parkingFee + fines;
+        double totalDue = parkingFee + currentFines + unpaidFines;
         System.out.println("Total Due: RM " + String.format("%.2f", totalDue));
         
         // 5. Process Payment
         boolean paymentSuccess = processPayment(amountPaid, totalDue);
         
         // Create Receipt
-        Receipt receipt = createReceipt(ticket, parkingFee, fines, totalDue, amountPaid, paymentSuccess);
+        Receipt receipt = createReceipt(ticket, parkingFee, currentFines + unpaidFines, totalDue, amountPaid, paymentSuccess);
         
         // 6. Update spot if payment successful
         if (paymentSuccess) {
@@ -130,11 +135,14 @@ public class ExitSystem {
         
         // 1. OVERSTAY FINE (> 24 hours)
         if (hoursParked > 24) {
-            System.out.println("OVERSTAY DETECTED: " + String.format("%.1f", hoursParked) + " hours");
+            System.out.println("OVERSTAY DETECTED");
             
-            // Using Fixed Fine Scheme (RM50) - will integrate Thassveen's Bridge later
-            fines += 50.0;
-            System.out.println("  + RM50 overstay fine");
+            FineManager fineManager = new FineManager();
+
+            double overstayFine = fineManager.calculateFine((int) hoursParked);
+            fines += overstayFine;
+
+            System.out.println("+ RM " + overstayFine + "overstay fine (Bridge Pattern)");
         }
         
         // 2. RESERVED SPOT VIOLATION
@@ -165,6 +173,19 @@ public class ExitSystem {
         
         return fines;
     }
+
+private double getUnpaidFines(String licensePlate) {
+    if (licensePlate.equals("ABC1234")) {
+        return 15.0;
+    }
+    else if (licensePlate.equals("NOVIP123")) {
+        return 50.0;
+    }
+    else if (licensePlate.equals("OVR72HRS")) {
+        return 30.0;
+    }
+    return 0.0;
+}
     
     private double calculateHoursParked(Ticket ticket) {
         Duration duration = Duration.between(ticket.getEntryTime(), LocalDateTime.now());
@@ -184,7 +205,7 @@ public class ExitSystem {
             }
             return true;
         } else {
-            System.out.println("❌ Payment FAILED");
+            System.out.println("Payment FAILED");
             System.out.println("Shortfall: RM " + String.format("%.2f", totalDue - amountPaid));
             return false;
         }
@@ -214,87 +235,3 @@ public class ExitSystem {
     }
 }
 
-// ========== SUPPORTING CLASSES (unchanged) ==========
-
-class Ticket {
-    private String licensePlate;
-    private String vehicleType;
-    private String spotId;
-    private String spotType;
-    private LocalDateTime entryTime;
-    
-    public Ticket(String licensePlate, String vehicleType, String spotId, 
-                  String spotType, LocalDateTime entryTime) {
-        this.licensePlate = licensePlate;
-        this.vehicleType = vehicleType;
-        this.spotId = spotId;
-        this.spotType = spotType;
-        this.entryTime = entryTime;
-    }
-    
-    public String getLicensePlate() { return licensePlate; }
-    public String getVehicleType() { return vehicleType; }
-    public String getSpotId() { return spotId; }
-    public String getSpotType() { return spotType; }
-    public LocalDateTime getEntryTime() { return entryTime; }
-}
-
-class Receipt {
-    private String licensePlate;
-    private LocalDateTime entryTime;
-    private LocalDateTime exitTime;
-    private String spotId;
-    private String spotType;
-    private String vehicleType;
-    private double hoursParked;
-    private double parkingFee;
-    private double fines;
-    private double totalDue;
-    private double amountPaid;
-    private boolean paymentSuccess;
-    
-    public Receipt(String licensePlate, LocalDateTime entryTime, LocalDateTime exitTime,
-                   String spotId, String spotType, String vehicleType, double hoursParked, 
-                   double parkingFee, double fines, double totalDue, double amountPaid, 
-                   boolean paymentSuccess) {
-        this.licensePlate = licensePlate;
-        this.entryTime = entryTime;
-        this.exitTime = exitTime;
-        this.spotId = spotId;
-        this.spotType = spotType;
-        this.vehicleType = vehicleType;
-        this.hoursParked = hoursParked;
-        this.parkingFee = parkingFee;
-        this.fines = fines;
-        this.totalDue = totalDue;
-        this.amountPaid = amountPaid;
-        this.paymentSuccess = paymentSuccess;
-    }
-    
-    @Override
-    public String toString() {
-        String receipt = "\n" + "=".repeat(50) + "\n";
-        receipt += "         PARKING LOT RECEIPT\n";
-        receipt += "=".repeat(50) + "\n";
-        receipt += String.format("Vehicle:      %s (%s)\n", licensePlate, vehicleType);
-        receipt += String.format("Spot:         %s [%s]\n", spotId, spotType);
-        receipt += String.format("Entry:        %s\n", entryTime);
-        receipt += String.format("Exit:         %s\n", exitTime);
-        receipt += String.format("Duration:     %.1f hours\n", hoursParked);
-        receipt += "-".repeat(50) + "\n";
-        receipt += String.format("Parking Fee:  RM %9.2f\n", parkingFee);
-        receipt += String.format("Fines:        RM %9.2f\n", fines);
-        receipt += String.format("Total Due:    RM %9.2f\n", totalDue);
-        receipt += String.format("Amount Paid:  RM %9.2f\n", amountPaid);
-        
-        if (amountPaid > totalDue) {
-            receipt += String.format("Change:       RM %9.2f\n", amountPaid - totalDue);
-        }
-        
-        receipt += "-".repeat(50) + "\n";
-        receipt += "Status:       " + (paymentSuccess ? "PAID" : "UNPAID") + "\n";
-        receipt += "=".repeat(50) + "\n";
-        
-        return receipt;
-    }
-}
