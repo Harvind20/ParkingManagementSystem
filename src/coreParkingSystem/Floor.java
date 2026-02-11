@@ -1,11 +1,23 @@
 package coreParkingSystem;
 import java.util.*;
 
-public class Floor {//4 row per floor
-    private int floorNumber;
-    private ArrayList<Row> rows;
+public class Floor {
+    private ArrayList<Row> rows = new ArrayList<Row>();
+    final int numOfRows = 4;
 
-    public int getFloorNumber(){return floorNumber;}
-    public void setFloorNumber(int fn){floorNumber = fn;}
-    public void addRowToFloor(Row r){rows.add(r);}
+    public Floor(int floorNum){
+        initializeRows(floorNum);
+    }
+    public int getNumOfRows(){return rows.size();}
+    private void initializeRows(int floorNum){
+        for(int i = 0; i < numOfRows; i++){
+            rows.add(new Row(i+1,floorNum));
+        }
+    }
+    public ArrayList<Row> getRows(){
+        return rows;
+    }
+    public Row getRow(int index){
+        return rows.get(index);
+    }
 }
