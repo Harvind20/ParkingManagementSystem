@@ -13,20 +13,23 @@ public class Row {
         String id = floorNum + "-" + rowNum + "-";
         for (int i = 0; i < numOfSpots; i++){
             if (i>=0 && i<=2){
-                spots.add(new ParkingSpot(id+i, Global.Type.REGULAR, i));
+                spots.add(new ParkingSpot(id+(i+1), ParkingSpot.Type.REGULAR, i+1));
             }
             else if (i>=3 && i<=5){
-                spots.add(new ParkingSpot(id+i, Global.Type.COMPACT, i));
+                spots.add(new ParkingSpot(id+(i+1), ParkingSpot.Type.COMPACT, i+1));
             }
             else if(i>=6 && i<=7){
-                spots.add(new ParkingSpot(id+i, Global.Type.HANDICAPPED, i));
+                spots.add(new ParkingSpot(id+(i+1), ParkingSpot.Type.HANDICAPPED, i+1));
             }
             else if(i>=8 && i<=9){
-                spots.add(new ParkingSpot(id+i, Global.Type.RESERVED, i));
+                spots.add(new ParkingSpot(id+(i+1), ParkingSpot.Type.RESERVED, i+1));
             }
         }
     }
     public ArrayList<ParkingSpot> getSpots(){
         return spots;
+    }
+    public ParkingSpot getSpot(int index){
+        return spots.get(index);
     }
 }
