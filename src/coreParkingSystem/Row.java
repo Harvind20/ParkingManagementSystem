@@ -8,7 +8,6 @@ public class Row {
     public Row(int rNum, int floorNum){
         initializeParkingSpot(floorNum, rNum);
     }
-    public void addSpotToRow(ParkingSpot ps){spots.add(ps);}
     public int getNumOfSpots(){return spots.size();}
     private void initializeParkingSpot(int floorNum, int rowNum){
         String id = floorNum + "-" + rowNum + "-";
@@ -27,16 +26,7 @@ public class Row {
             }
         }
     }
-    private int getSpotIndex(String sID){
-        for (int i = 0; i < numOfSpots; i++){
-            if(spots.get(i).getSpotID() == sID){
-                return i;
-            }
-        }
-        return 0;
-    }
-    public void changeSpotStatus(String sID, Global.Status status){
-        int index = getSpotIndex(sID);
-        spots.get(index).setSpotStatus(status);
+    public ArrayList<ParkingSpot> getSpots(){
+        return spots;
     }
 }

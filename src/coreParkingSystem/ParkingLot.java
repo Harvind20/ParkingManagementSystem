@@ -14,15 +14,16 @@ public class ParkingLot {
     public static ParkingLot getInstance(){
         return InstanceHolder.INSTANCE;
     }
-    public void addFloorToLot(Floor f){floors.add(f);}
-    public Floor getFloor(int index){return floors.get(index);}
     private void initializeFloors(){
         for(int i = 0; i < floorNumber; i++){
             floors.add(new Floor(i));
         }
     }
+    public ArrayList<Floor> getFloors(){
+        return floors;
+    }
 
     public static void main(String[] args){
-        System.out.println(ParkingLot.getInstance().getFloor(0));
+        
     }
 }
