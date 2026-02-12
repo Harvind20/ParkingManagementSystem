@@ -1,6 +1,7 @@
 package ExitModule;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Receipt {
 
@@ -12,15 +13,22 @@ public class Receipt {
     private String vehicleType;
     private double hoursParked;
     private double parkingFee;
-    private double fines;
-    private double totalDue;
-    private double amountPaid;
+    private double finesPaidNow;
+    private double totalFinesOutstanding;
+    private double parkingFeePaid;
+    private double finesPaid;
+    private double totalPaid;
+    private double change;
+    private String paymentMethod;
+    private String receiptNumber;
+    private String ticketId;
     private boolean paymentSuccess;
 
     public Receipt(String licensePlate, LocalDateTime entryTime, LocalDateTime exitTime,
                    String spotId, String spotType, String vehicleType, double hoursParked,
-                   double parkingFee, double fines, double totalDue, double amountPaid,
-                   boolean paymentSuccess) {
+                   double parkingFee, double finesPaidNow, double totalFinesOutstanding,
+                   double parkingFeePaid, double finesPaid, double totalPaid, double change,
+                   String paymentMethod, String ticketId, boolean paymentSuccess) {
 
         this.licensePlate = licensePlate;
         this.entryTime = entryTime;
@@ -30,46 +38,77 @@ public class Receipt {
         this.vehicleType = vehicleType;
         this.hoursParked = hoursParked;
         this.parkingFee = parkingFee;
-        this.fines = fines;
-        this.totalDue = totalDue;
-        this.amountPaid = amountPaid;
+        this.finesPaidNow = finesPaidNow;
+        this.totalFinesOutstanding = totalFinesOutstanding;
+        this.parkingFeePaid = parkingFeePaid;
+        this.finesPaid = finesPaid;
+        this.totalPaid = totalPaid;
+        this.change = change;
+        this.paymentMethod = paymentMethod;
+        this.ticketId = ticketId;
         this.paymentSuccess = paymentSuccess;
+        
+        // Generate receipt number
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String plateSuffix = licensePlate.length() > 4 ? 
+            licensePlate.substring(0, 4) : licensePlate;
+        this.receiptNumber = "RCP-" + exitTime.format(dtf) + "-" + plateSuffix;
     }
 
-    public double getTotalDue() { return totalDue; }
-    public double getFines() { return fines; }
     public double getParkingFee() { return parkingFee; }
-    public double getAmountPaid() { return amountPaid; }
+    public double getFinesPaidNow() { return finesPaidNow; }
+    public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
+    public double getTotalPaid() { return totalPaid; }
     public String getLicensePlate() { return licensePlate; }
     public boolean isPaymentSuccess() { return paymentSuccess; }
 
     @Override
     public String toString() {
-        String receipt = "\n" + "=".repeat(50) + "\n";
-        receipt += "PARKING LOT RECEIPT\n";
-        receipt += "=".repeat(50) + "\n";
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n").append("=".repeat(58)).append("\n");
+        sb.append("                    PARKING LOT RECEIPT\n");
+        sb.append("=".repeat(58)).append("\n");
+        sb.append(String.format("Receipt #:    %s\n", receiptNumber));
+        sb.append(String.format("Ticket #:     %s\n", ticketId));
+        sb.append("-".repeat(58)).append("\n");
 
-        receipt += String.format("Vehicle: %s (%s)\n", licensePlate, vehicleType);
-        receipt += String.format("Spot: %s (%s)\n", spotId, spotType);
-        receipt += String.format("Entry: %s\n", entryTime);
-        receipt += String.format("Exit: %s\n", exitTime);
-        receipt += String.format("Duration: %.1f hours\n", hoursParked);
+        sb.append(String.format("Vehicle:      %-12s (%s)\n", licensePlate, vehicleType));
+        sb.append(String.format("Spot:         %-12s [%s]\n", spotId, spotType));
+        sb.append(String.format("Entry:        %s\n", entryTime.format(dtf)));
+        sb.append(String.format("Exit:         %s\n", exitTime.format(dtf)));
+        sb.append(String.format("Duration:     %.1f hours\n", hoursParked));
 
-        receipt += "-".repeat(50) + "\n";
+        sb.append("-".repeat(58)).append("\n");
 
-        receipt += String.format("Parking Fee: RM %.2f\n", parkingFee);
-        receipt += String.format("Fines: RM %.2f\n", fines);
-        receipt += String.format("Total Due: RM %.2f\n", totalDue);
-        receipt += String.format("Amount Paid: RM %.2f\n", amountPaid);
-
-        if (amountPaid > totalDue) {
-            receipt += String.format("Change: RM %.2f\n", amountPaid - totalDue);
+        sb.append(String.format("Parking Fee:  RM %11.2f\n", parkingFee));
+        
+        if (finesPaidNow > 0) {
+            sb.append(String.format("Fines Paid:   RM %11.2f\n", finesPaidNow));
         }
-
-        receipt += "-".repeat(50) + "\n";
-        receipt += "Status: " + (paymentSuccess ? "PAID" : "UNPAID") + "\n";
-        receipt += "=".repeat(50) + "\n";
-
-        return receipt;
+        
+        sb.append(String.format("Total Paid:   RM %11.2f\n", totalPaid));
+        
+        if (change > 0) {
+            sb.append(String.format("Change:       RM %11.2f\n", change));
+        }
+        
+        sb.append("-".repeat(58)).append("\n");
+        
+        double remainingFines = totalFinesOutstanding - finesPaidNow;
+        if (remainingFines > 0.01) {
+            sb.append(String.format("Outstanding Fines: RM %.2f\n", remainingFines));
+            sb.append("These fines will be carried to your next visit.\n");
+            sb.append("-".repeat(58)).append("\n");
+        }
+        
+        sb.append(String.format("Payment:      %s\n", paymentMethod));
+        sb.append("-".repeat(58)).append("\n");
+        sb.append("Status:       PAID\n");
+        sb.append("\nThank you for parking with us!\n");
+        sb.append("=".repeat(58)).append("\n");
+        
+        return sb.toString();
     }
 }
