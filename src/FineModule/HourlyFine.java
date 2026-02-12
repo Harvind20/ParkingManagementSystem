@@ -1,4 +1,4 @@
-package fineManagement;
+package FineModule;
 
 public class HourlyFine implements FineScheme {
 

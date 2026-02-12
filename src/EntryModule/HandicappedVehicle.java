@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 public class HandicappedVehicle extends Vehicle {
     public HandicappedVehicle(String plate) { 

@@ -1,4 +1,4 @@
-package feeCalculator;
+package ExitModule;
 
 import java.time.LocalDateTime;
 

@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 public class SUV extends Vehicle {
     public SUV(String plate) { 

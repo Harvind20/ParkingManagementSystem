@@ -1,10 +1,10 @@
-package EntrySystem;
+package EntryModule;
 
-import feeCalculator.ExitSystem;
-import feeCalculator.Receipt;
+import ExitModule.ExitSystem;
+import ExitModule.Receipt;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
-import fineManagement.*;
+import FineModule.*;
 import java.time.LocalDateTime;
 
 public class IntegrationTest {

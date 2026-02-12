@@ -1,5 +1,5 @@
 package coreParkingSystem;
-import EntrySystem.Ticket;
+import EntryModule.Ticket;
 import java.util.*;
 
 public class ParkingLot {
