@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;

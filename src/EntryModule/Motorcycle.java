@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 public class Motorcycle extends Vehicle {
     public Motorcycle(String plate) { 

@@ -1,4 +1,4 @@
-package fineManagement;
+package FineModule;
 
 public class FixedFine implements FineScheme {
 

@@ -1,4 +1,4 @@
-package feeCalculator;
+package ExitModule;
 
 public class TestExitSystem {
     public static void main(String[] args) {

@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 import java.time.Instant;
 import java.time.LocalDateTime;

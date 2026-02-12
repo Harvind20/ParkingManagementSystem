@@ -1,4 +1,4 @@
-package EntrySystem;
+package EntryModule;
 
 public abstract class Vehicle {
     protected String licensePlate;

@@ -1,8 +1,8 @@
-package feeCalculator;
+package ExitModule;
 
-import EntrySystem.Ticket;
+import EntryModule.Ticket;
+import FineModule.FineManager;
 import coreParkingSystem.ParkingLot;
-import fineManagement.FineManager;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
