@@ -1,16 +1,20 @@
 package coreParkingSystem;
+
 import EntryModule.Ticket;
 import java.util.*;
 
 public class ParkingLot {
     private ArrayList<Floor> floors = new ArrayList<>();
+    
+    // DAOs
     private TicketDAO ticketDAO = new TicketDAO(); 
     private ParkingSpotDAO spotDAO = new ParkingSpotDAO();
+    private ReceiptDAO receiptDAO = new ReceiptDAO(); // Added ReceiptDAO
     
     final int floorNumber = 3;
 
     private ParkingLot(){
-        DatabaseConnection.initializeDB();
+        DatabaseConnection.initializeDB(); 
         initializeFloors();
     }
     
@@ -22,9 +26,18 @@ public class ParkingLot {
         return InstanceHolder.INSTANCE;
     }
     
+    // --- SEQUENCE GENERATION ---
+    public int getNextSequenceNumber(String plateNum) {
+        // Count active tickets + past receipts + 1
+        int active = ticketDAO.getTicketCount(plateNum);
+        int past = receiptDAO.getReceiptCount(plateNum);
+        return active + past + 1;
+    }
+    
+    // --- DATABASE INTEGRATION METHODS ---
     public void saveTicket(Ticket ticket) {
         if (ticket != null) {
-            ticketDAO.create(ticket);
+            ticketDAO.create(ticket); 
             System.out.println("[DB] Ticket saved for " + ticket.getLicensePlate());
         }
     }
@@ -37,7 +50,8 @@ public class ParkingLot {
         ticketDAO.delete(plate); 
         System.out.println("[DB] Ticket closed for " + plate);
     }
-    
+
+    // --- EXISTING FLOOR LOGIC ---
     private void initializeFloors(){
         for(int i = 0; i < floorNumber; i++){
             floors.add(new Floor(i+1));

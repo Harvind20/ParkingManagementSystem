@@ -7,6 +7,7 @@ import coreParkingSystem.Row;
 import java.util.ArrayList;
 
 public class EntryController {
+
     public boolean checkSystemFull() {
         ParkingLot lot = ParkingLot.getInstance();
         ArrayList<Floor> floors = lot.getFloors();
@@ -48,16 +49,21 @@ public class EntryController {
 
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
         
+        // --- NEW: Get Sequence Number ---
+        int seq = lot.getNextSequenceNumber(vehicle.getLicensePlate());
+
         Ticket ticket = new Ticket.TicketBuilder()
                 .addPlate(vehicle.getLicensePlate())
                 .addTime(vehicle.getEntryTime())
                 .assignSpot(selectedSpotID)
                 .addVehicleType(vehicle.getVehicleType())
                 .addSpotType(type.toString()) 
+                .addSequenceNumber(seq) // Pass to builder
                 .build();
         
         vehicle.setTicketId(ticket.toString());
         lot.saveTicket(ticket); 
+
         return "SUCCESS: " + ticket.toString();
     }
 

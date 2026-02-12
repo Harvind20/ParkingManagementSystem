@@ -15,37 +15,47 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, UUID.randomUUID().toString());
-            pstmt.setString(2, "TIX-" + receipt.getLicensePlate()); 
+            // Updated: Use the actual Ticket ID from the Receipt object
+            pstmt.setString(2, receipt.getTicketID()); 
             pstmt.setString(3, receipt.getLicensePlate());
-            pstmt.setString(4, "UNKNOWN"); 
-            pstmt.setString(5, LocalDateTime.now().toString()); 
-            pstmt.setString(6, LocalDateTime.now().toString());
-            pstmt.setDouble(7, 0.0);
+            pstmt.setString(4, receipt.getSpotId()); 
+            pstmt.setString(5, receipt.getEntryTime().toString()); 
+            pstmt.setString(6, receipt.getExitTime().toString());
+            pstmt.setDouble(7, receipt.getHoursParked());
             pstmt.setDouble(8, receipt.getParkingFee());
             pstmt.setDouble(9, receipt.getFines());
             pstmt.setDouble(10, receipt.getAmountPaid());
-            pstmt.setString(11, "CASH");
+            pstmt.setString(11, receipt.getPaymentMethod());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public Receipt read(String id) {
-        return null;
+    public int getReceiptCount(String plateNum) {
+        String sql = "SELECT COUNT(*) FROM receipts WHERE plate_num = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plateNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     @Override
-    public void update(Receipt t) {
-    }
+    public Receipt read(String id) { return null; }
 
     @Override
-    public void delete(String id) {
-    }
+    public void update(Receipt t) {}
 
     @Override
-    public List<Receipt> getAll() {
-        return new ArrayList<>();
-    }
+    public void delete(String id) {}
+
+    @Override
+    public List<Receipt> getAll() { return new ArrayList<>(); }
 }
