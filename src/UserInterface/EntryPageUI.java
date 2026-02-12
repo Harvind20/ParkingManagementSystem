@@ -57,7 +57,7 @@ public class EntryPageUI extends JFrame {
         background.add(vehicleLabel, gbc);
 
         // Rounded Dropdown
-        String[] vehicles = {"Motorcycle", "Car", "SUV/Truck"};
+        String[] vehicles = {"Car", "SUV/Truck", "Motorcycle"};
         JComboBox<String> vehicleDropdown = new JComboBox<>(vehicles);
         vehicleDropdown.setPreferredSize(new Dimension(320, 40));
         vehicleDropdown.setBackground(Color.WHITE);

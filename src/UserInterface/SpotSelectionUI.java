@@ -16,12 +16,18 @@ public class SpotSelectionUI extends JFrame {
 
     JLabel arrowEntry, arrowExit, arrowUp, arrowDown;
 
-    boolean vipEnabled = false;
-    boolean reservedEnabled = false;
+    // TOP CONTROLS
+    JButton returnBtn;
+    JComboBox<String> floorDropdown;
+    JPanel floorWrapper;
+
+    // Legend panels
+    JPanel legendOccupied, legendRegular, legendCompact, legendVIP, legendHandicap;
+
+    boolean handicapEnabled = false;
+    boolean vipEnabled = true;
 
     JPanel selectedSpot = null;
-
-    // Row counter to label rows correctly
     private int rowCounter = 1;
 
     public SpotSelectionUI() {
@@ -34,16 +40,63 @@ public class SpotSelectionUI extends JFrame {
         background.setBackground(new Color(10, 70, 100));
         add(background);
 
+        // ROUNDED RETURN BUTTON
+        returnBtn = new RoundedButton("← Return", new Color(255,90,90));
+        background.add(returnBtn);
+
+        // FLOOR DROPDOWN
+        floorDropdown = new JComboBox<>(new String[]{
+                "1st Floor",
+                "2nd Floor",
+                "3rd Floor"
+        });
+        floorDropdown.setFont(new Font("Arial", Font.BOLD, 14));
+        floorDropdown.setOpaque(false);
+        floorDropdown.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+
+        floorWrapper = new RoundedPanel(30);
+        floorWrapper.setBackground(new Color(40,190,210));
+        floorWrapper.setLayout(new BorderLayout());
+        floorWrapper.add(floorDropdown, BorderLayout.CENTER);
+        background.add(floorWrapper);
+
+        // RETURN ACTION
+        returnBtn.addActionListener(e -> {
+            new EntryPageUI().setVisible(true);
+            dispose();
+        });
+
+        // FLOOR CHANGE → UPDATE VISUAL AIDS
+        floorDropdown.addActionListener(e -> {
+            String selected = (String) floorDropdown.getSelectedItem();
+
+            if(selected.equals("1st Floor")) {
+                updateFloorVisuals(1);
+            }
+            else if(selected.equals("2nd Floor")) {
+                updateFloorVisuals(2);
+            }
+            else if(selected.equals("3rd Floor")) {
+                updateFloorVisuals(3);
+            }
+        });
+
         topBlock = createRowBlock();
         bottomBlock = createRowBlock();
         background.add(topBlock);
         background.add(bottomBlock);
 
-        background.add(createLegendBox(Color.RED, "Occupied"));
-        background.add(createLegendBox(new Color(0,180,90), "Regular"));
-        background.add(createLegendBox(new Color(30,100,20), "Compact"));
-        background.add(createLegendBox(new Color(140,30,160), "Reserved"));
-        background.add(createLegendBox(new Color(70,160,220), "Handicapped"));
+        legendOccupied = createLegendBox(Color.RED, "Occupied");
+        legendRegular = createLegendBox(new Color(0,180,90), "Regular");
+        legendCompact = createLegendBox(new Color(30,100,20), "Compact");
+        legendVIP = createLegendBox(new Color(140,30,160), "VIP");
+        legendHandicap = createLegendBox(new Color(70,160,220), "Handicapped");
+
+        background.add(legendOccupied);
+        background.add(legendRegular);
+        background.add(legendCompact);
+        background.add(legendVIP);
+        background.add(legendHandicap);
 
         upFrom2nd = createSign("UP from 2nd Floor",170,70);
         entry = createSign("ENTRY",130,60);
@@ -64,7 +117,6 @@ public class SpotSelectionUI extends JFrame {
         downLeftBottomBlock = createArrow("↓",40);
 
         leftTop = createArrow("←",45);
-
         rightMiddle1 = createArrow("→",45);
         rightMiddle2 = createArrow("→",45);
 
@@ -109,9 +161,11 @@ public class SpotSelectionUI extends JFrame {
                 bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
 
                 int ly = panelH/2 - 60;
-                for(int i=2;i<=6;i++){
-                    background.getComponent(i).setBounds(40, ly + (i-2)*30,180,20);
-                }
+                legendOccupied.setBounds(40, ly, 180, 20);
+                legendRegular.setBounds(40, ly+30, 180, 20);
+                legendCompact.setBounds(40, ly+60, 180, 20);
+                legendVIP.setBounds(40, ly+90, 180, 20);
+                legendHandicap.setBounds(40, ly+120, 180, 20);
 
                 upFrom2nd.setBounds(0,0,170,70);
                 entry.setBounds(panelW-125,0,130,60);
@@ -119,6 +173,9 @@ public class SpotSelectionUI extends JFrame {
                 lift.setBounds(panelW-70,panelH/2-80,60,160);
                 up.setBounds(0,panelH-70,130,70);
                 down.setBounds(panelW-150,panelH-70,150,70);
+
+                returnBtn.setBounds(panelW/2 - 170, 10, 150, 45);
+                floorWrapper.setBounds(panelW/2 - 5, 10, 180, 45);
 
                 downTopLeft.setLocation(55, 75);
                 downLeftTopBlock.setLocation(topX - 60, topY + 40);
@@ -140,6 +197,44 @@ public class SpotSelectionUI extends JFrame {
         });
     }
 
+    // UPDATED FLOOR TEXT LOGIC
+    private void updateFloorVisuals(int floor) {
+
+        upFrom2nd.removeAll();
+        entry.removeAll();
+
+        JLabel leftLabel = null;
+        JLabel rightLabel = null;
+
+        if(floor == 1) {
+            leftLabel = new JLabel("UP to 2nd");
+            rightLabel = new JLabel("ENTRY");
+        }
+        else if(floor == 2) {
+            leftLabel = new JLabel("UP from 3rd Floor");
+            rightLabel = new JLabel("DOWN from 1st Floor");
+        }
+        else if(floor == 3) {
+            rightLabel = new JLabel("DOWN from 2nd Floor");
+        }
+
+        if(leftLabel != null) {
+            leftLabel.setFont(new Font("Arial", Font.BOLD, 14));
+            upFrom2nd.add(leftLabel);
+        }
+
+        if(rightLabel != null) {
+            rightLabel.setFont(new Font("Arial", Font.BOLD, 14));
+            entry.add(rightLabel);
+        }
+
+        upFrom2nd.revalidate();
+        upFrom2nd.repaint();
+
+        entry.revalidate();
+        entry.repaint();
+    }
+
     private JPanel createRowBlock(){
         RoundedPanel block = new RoundedPanel(40);
         block.setLayout(new GridLayout(2,1,0,0));
@@ -148,7 +243,6 @@ public class SpotSelectionUI extends JFrame {
 
         block.add(createSingleRow(rowCounter++));
         block.add(createSingleRow(rowCounter++));
-
         return block;
     }
 
@@ -157,53 +251,17 @@ public class SpotSelectionUI extends JFrame {
         legendRow.setOpaque(false);
 
         for(int i=0;i<10;i++){
-
             Color c;
-            String type;
-
-            if(i<3){ c=new Color(30,100,20); type="COMPACT"; }
-            else if(i<6){ c=new Color(0,180,90); type="REGULAR"; }
-            else if(i<8){ c=new Color(140,30,160); type="RESERVED"; }
-            else{ c=new Color(70,160,220); type="VIP"; }
+            if(i<3) c=new Color(30,100,20);
+            else if(i<6) c=new Color(0,180,90);
+            else if(i<8) c=new Color(140,30,160);
+            else c=new Color(70,160,220);
 
             JPanel spot=new JPanel();
             spot.setBackground(c);
             spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
-
-            if(type.equals("VIP") && !vipEnabled){
-                spot.setEnabled(false);
-            }
-
-            if(type.equals("RESERVED") && !reservedEnabled){
-                spot.setEnabled(false);
-            }
-
-            int spotNumber = i + 1;
-
-            spot.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent e) {
-
-                    if(!spot.isEnabled()) return;
-
-                    if(selectedSpot != null){
-                        selectedSpot.setBorder(
-                            BorderFactory.createLineBorder(Color.WHITE,1)
-                        );
-                    }
-
-                    spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
-                    selectedSpot = spot;
-
-                    new ConfirmSpotDialog(
-                        SpotSelectionUI.this,
-                        "Row " + rowIndex + " Spot " + spotNumber
-                    ).setVisible(true);
-                }
-            });
-
             legendRow.add(spot);
         }
-
         return legendRow;
     }
 
@@ -226,9 +284,7 @@ public class SpotSelectionUI extends JFrame {
         p.setBackground(new Color(255,190,0));
         p.setSize(w,h);
         p.setLayout(new GridBagLayout());
-        JLabel l=new JLabel(text);
-        l.setFont(new Font("Arial",Font.BOLD,14));
-        p.add(l);
+        p.add(new JLabel(text));
         return p;
     }
 
@@ -237,8 +293,7 @@ public class SpotSelectionUI extends JFrame {
         p.setBackground(new Color(255,190,0));
         p.setSize(w,h);
         p.setLayout(new GridBagLayout());
-        String vertical="<html>"+text.replace("", "<br>").trim()+"</html>";
-        p.add(new JLabel(vertical));
+        p.add(new JLabel("<html>"+text.replace("", "<br>").trim()+"</html>"));
         return p;
     }
 
@@ -255,8 +310,31 @@ public class SpotSelectionUI extends JFrame {
         RoundedPanel(int r){this.r=r;setOpaque(false);}
         protected void paintComponent(Graphics g){
             Graphics2D g2=(Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(getBackground());
             g2.fillRoundRect(0,0,getWidth(),getHeight(),r,r);
+            super.paintComponent(g);
+        }
+    }
+
+    class RoundedButton extends JButton {
+        Color color;
+        RoundedButton(String text, Color c){
+            super(text);
+            color=c;
+            setForeground(Color.BLACK);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFont(new Font("Arial", Font.BOLD, 14));
+        }
+        protected void paintComponent(Graphics g){
+            Graphics2D g2=(Graphics2D)g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.fillRoundRect(0,0,getWidth(),getHeight(),30,30);
             super.paintComponent(g);
         }
     }
