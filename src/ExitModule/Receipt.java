@@ -55,11 +55,24 @@ public class Receipt {
         this.receiptNumber = "RCP-" + exitTime.format(dtf) + "-" + plateSuffix;
     }
 
-    public double getParkingFee() { return parkingFee; }
-    public double getFinesPaidNow() { return finesPaidNow; }
-    public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
-    public double getTotalPaid() { return totalPaid; }
+    // --- GETTERS REQUIRED BY RECEIPT DAO ---
+    public String getTicketID() { return ticketId; }
     public String getLicensePlate() { return licensePlate; }
+    public String getSpotId() { return spotId; }
+    public LocalDateTime getEntryTime() { return entryTime; }
+    public LocalDateTime getExitTime() { return exitTime; }
+    public double getHoursParked() { return hoursParked; }
+    public double getParkingFee() { return parkingFee; }
+    
+    // Maps "getFines" to the fines paid in this specific receipt
+    public double getFines() { return finesPaidNow; } 
+    
+    // Maps "getAmountPaid" to the total paid (fee + fines)
+    public double getAmountPaid() { return totalPaid; }
+    
+    // Additional Getters
+    public String getPaymentMethod() { return paymentMethod; }
+    public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
     public boolean isPaymentSuccess() { return paymentSuccess; }
 
     @Override
@@ -68,17 +81,17 @@ public class Receipt {
         
         StringBuilder sb = new StringBuilder();
         sb.append("\n").append("=".repeat(58)).append("\n");
-        sb.append("                    PARKING LOT RECEIPT\n");
+        sb.append("                   PARKING LOT RECEIPT\n");
         sb.append("=".repeat(58)).append("\n");
         sb.append(String.format("Receipt #:    %s\n", receiptNumber));
         sb.append(String.format("Ticket #:     %s\n", ticketId));
         sb.append("-".repeat(58)).append("\n");
 
-        sb.append(String.format("Vehicle:      %-12s (%s)\n", licensePlate, vehicleType));
-        sb.append(String.format("Spot:         %-12s [%s]\n", spotId, spotType));
-        sb.append(String.format("Entry:        %s\n", entryTime.format(dtf)));
-        sb.append(String.format("Exit:         %s\n", exitTime.format(dtf)));
-        sb.append(String.format("Duration:     %.1f hours\n", hoursParked));
+        sb.append(String.format("Vehicle:       %-12s (%s)\n", licensePlate, vehicleType));
+        sb.append(String.format("Spot:          %-12s [%s]\n", spotId, spotType));
+        sb.append(String.format("Entry:         %s\n", entryTime.format(dtf)));
+        sb.append(String.format("Exit:          %s\n", exitTime.format(dtf)));
+        sb.append(String.format("Duration:      %.1f hours\n", hoursParked));
 
         sb.append("-".repeat(58)).append("\n");
 
@@ -103,9 +116,9 @@ public class Receipt {
             sb.append("-".repeat(58)).append("\n");
         }
         
-        sb.append(String.format("Payment:      %s\n", paymentMethod));
+        sb.append(String.format("Payment:       %s\n", paymentMethod));
         sb.append("-".repeat(58)).append("\n");
-        sb.append("Status:       PAID\n");
+        sb.append("Status:        PAID\n");
         sb.append("\nThank you for parking with us!\n");
         sb.append("=".repeat(58)).append("\n");
         

@@ -12,6 +12,7 @@ public class Ticket {
     private String vehicleType;
     private String spotType;
     private LocalDateTime entryTime;
+    private int sequenceNumber; // New field for AutoIncrement
 
     private Ticket(TicketBuilder builder) {
         this.licensePlate = builder.licensePlate;
@@ -19,21 +20,25 @@ public class Ticket {
         this.vehicleType = builder.vehicleType;
         this.spotType = builder.spotType;
         this.entryTime = builder.entryTime;
+        this.sequenceNumber = builder.sequenceNumber;
         this.ticketID = generateID();
     }
 
-    public Ticket(String plate, String vType, String sId, String sType, LocalDateTime time) {
+    // Constructor for Testing (Updated)
+    public Ticket(String plate, String vType, String sId, String sType, LocalDateTime time, int seq) {
         this.licensePlate = plate;
         this.vehicleType = vType;
         this.spotID = sId;
         this.spotType = sType;
         this.entryTime = time;
-        this.ticketID = "TEST-" + plate;
+        this.sequenceNumber = seq;
+        this.ticketID = generateID();
     }
 
     private String generateID() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-        return "Tix-" + licensePlate + "-" + entryTime.format(dtf);
+        // Format: T<Seq>-<Plate>-<Time>
+        return "T" + sequenceNumber + "-" + licensePlate + "-" + entryTime.format(dtf);
     }
 
     public String getTicketID() { return ticketID; }
@@ -42,6 +47,7 @@ public class Ticket {
     public String getVehicleType() { return vehicleType; }
     public String getSpotType() { return spotType; }
     public LocalDateTime getEntryTime() { return entryTime; }
+    public int getSequenceNumber() { return sequenceNumber; }
 
     public void setTicketID(String id) { this.ticketID = id; }
 
@@ -56,6 +62,7 @@ public class Ticket {
         private String vehicleType = "Car";
         private String spotType = "Regular";
         private LocalDateTime entryTime;
+        private int sequenceNumber = 1; // Default to 1
 
         public TicketBuilder addPlate(String plate) {
             this.licensePlate = plate;
@@ -87,6 +94,11 @@ public class Ticket {
 
         public TicketBuilder addTime(LocalDateTime time) {
             this.entryTime = time;
+            return this;
+        }
+        
+        public TicketBuilder addSequenceNumber(int seq) {
+            this.sequenceNumber = seq;
             return this;
         }
 
