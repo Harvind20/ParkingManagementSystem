@@ -8,7 +8,7 @@ public class ConfirmSpotDialog extends JDialog {
         setSize(300, 360);
         setLocationRelativeTo(parent);
         setUndecorated(true);
-        setBackground(new Color(0,0,0,0)); // transparent outside
+        setBackground(new Color(0,0,0,0));
 
         JPanel wrapper = new JPanel(new GridBagLayout());
         wrapper.setOpaque(false);
@@ -34,8 +34,7 @@ public class ConfirmSpotDialog extends JDialog {
 
         cancel.addActionListener(e -> dispose());
         confirm.addActionListener(e -> {
-            JOptionPane.showMessageDialog(parent,
-                    "You parked at " + spotId);
+            JOptionPane.showMessageDialog(parent,"You parked at " + spotId);
             dispose();
         });
 
@@ -60,21 +59,18 @@ public class ConfirmSpotDialog extends JDialog {
         return l;
     }
 
-    // Rounded card
     class RoundedPanel extends JPanel {
         int r;
         RoundedPanel(int r){this.r=r;setOpaque(false);}
         protected void paintComponent(Graphics g){
             Graphics2D g2=(Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(getBackground());
             g2.fillRoundRect(0,0,getWidth(),getHeight(),r,r);
             super.paintComponent(g);
         }
     }
 
-    // Rounded buttons
     class RoundedButton extends JButton {
         Color color;
         RoundedButton(String text, Color c){
@@ -89,8 +85,7 @@ public class ConfirmSpotDialog extends JDialog {
         }
         protected void paintComponent(Graphics g){
             Graphics2D g2=(Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(color);
             g2.fillRoundRect(0,0,getWidth(),getHeight(),25,25);
             super.paintComponent(g);
