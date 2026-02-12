@@ -7,7 +7,6 @@ import coreParkingSystem.Row;
 import java.util.ArrayList;
 
 public class EntryController {
-
     public boolean checkSystemFull() {
         ParkingLot lot = ParkingLot.getInstance();
         ArrayList<Floor> floors = lot.getFloors();
@@ -53,20 +52,19 @@ public class EntryController {
                 .addPlate(vehicle.getLicensePlate())
                 .addTime(vehicle.getEntryTime())
                 .assignSpot(selectedSpotID)
+                .addVehicleType(vehicle.getVehicleType())
+                .addSpotType(type.toString()) 
                 .build();
         
         vehicle.setTicketId(ticket.toString());
-
+        lot.saveTicket(ticket); 
         return "SUCCESS: " + ticket.toString();
     }
 
     private boolean isEntryAllowed(Vehicle v, ParkingSpot.Type spotType) {
         if (v instanceof HandicappedVehicle) return true;
-
         if (v instanceof SUV && spotType == ParkingSpot.Type.COMPACT) return false;
-
         if (spotType == ParkingSpot.Type.RESERVED) return false; 
-
         return true; 
     }
 }

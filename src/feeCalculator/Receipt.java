@@ -36,6 +36,13 @@ public class Receipt {
         this.paymentSuccess = paymentSuccess;
     }
 
+    public double getTotalDue() { return totalDue; }
+    public double getFines() { return fines; }
+    public double getParkingFee() { return parkingFee; }
+    public double getAmountPaid() { return amountPaid; }
+    public String getLicensePlate() { return licensePlate; }
+    public boolean isPaymentSuccess() { return paymentSuccess; }
+
     @Override
     public String toString() {
         String receipt = "\n" + "=".repeat(50) + "\n";
