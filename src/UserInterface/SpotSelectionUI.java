@@ -25,13 +25,13 @@ public class SpotSelectionUI extends JFrame {
     boolean handicapEnabled = false;
     boolean vipEnabled = true;
 
-    JPanel selectedSpot = null;
-    private int rowCounter = 1;
+    JPanel[] selectedSpotHolder = new JPanel[1];
 
-    // NEW: Track current floor
+    private int rowCounter = 1;
     int currentFloor = 1;
 
     public SpotSelectionUI() {
+
         setTitle("Select Parking Spot");
         setSize(1400, 800);
         setLocationRelativeTo(null);
@@ -49,13 +49,11 @@ public class SpotSelectionUI extends JFrame {
                 "2nd Floor",
                 "3rd Floor"
         });
-        floorDropdown.setFont(new Font("Arial", Font.BOLD, 14));
-        floorDropdown.setOpaque(false);
 
         floorWrapper = new RoundedPanel(30);
         floorWrapper.setBackground(new Color(40,190,210));
         floorWrapper.setLayout(new BorderLayout());
-        floorWrapper.add(floorDropdown, BorderLayout.CENTER);
+        floorWrapper.add(floorDropdown);
         background.add(floorWrapper);
 
         returnBtn.addActionListener(e -> {
@@ -63,7 +61,6 @@ public class SpotSelectionUI extends JFrame {
             dispose();
         });
 
-        // UPDATED: track floor number
         floorDropdown.addActionListener(e -> {
             String selected = (String) floorDropdown.getSelectedItem();
 
@@ -196,51 +193,51 @@ public class SpotSelectionUI extends JFrame {
         });
     }
 
-    private void updateFloorVisuals(int floor) {
+    private void updateFloorVisuals(int floor){
+
         upFrom2nd.removeAll();
         entry.removeAll();
 
+        // Reset when returning to 1st floor
         upFrom2nd.setVisible(true);
         exit.setVisible(true);
         arrowExit.setVisible(true);
+        downTopLeft.setVisible(true);
 
-        JLabel leftLabel = null;
-        JLabel rightLabel = null;
+        JLabel leftLabel=null;
+        JLabel rightLabel=null;
 
-        if(floor == 1) {
-            leftLabel = new JLabel("UP to 2nd");
-            leftLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-            rightLabel = new JLabel("ENTRY");
-            rightLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        if(floor==1){
+            leftLabel=new JLabel("UP to 2nd");
+            rightLabel=new JLabel("ENTRY");
         }
-        else if(floor == 2) {
-            leftLabel = new JLabel("UP from 3rd Floor");
-            leftLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        else if(floor==2){
+            leftLabel=new JLabel("UP from 3rd Floor");
 
-            rightLabel = new JLabel("DOWN from 1st Floor");
-            rightLabel.setFont(new Font("Arial", Font.BOLD, 11));
+            rightLabel=new JLabel("DOWN from 1st Floor");
+            rightLabel.setFont(new Font("Arial",Font.BOLD,11));
 
             exit.setVisible(false);
             arrowExit.setVisible(false);
         }
-        else if(floor == 3) {
+        else{ // 3rd floor
+
+            // Hide top-left sign AND its arrow
             upFrom2nd.setVisible(false);
+            downTopLeft.setVisible(false);
 
-            rightLabel = new JLabel("DOWN from 2nd Floor");
-            rightLabel.setFont(new Font("Arial", Font.BOLD, 11));
+            rightLabel=new JLabel("DOWN from 2nd Floor");
+            rightLabel.setFont(new Font("Arial",Font.BOLD,11));
 
             exit.setVisible(false);
             arrowExit.setVisible(false);
         }
 
-        if(leftLabel != null) upFrom2nd.add(leftLabel);
-        if(rightLabel != null) entry.add(rightLabel);
+        if(leftLabel!=null) upFrom2nd.add(leftLabel);
+        if(rightLabel!=null) entry.add(rightLabel);
 
         upFrom2nd.revalidate();
-        upFrom2nd.repaint();
         entry.revalidate();
-        entry.repaint();
     }
 
     private JPanel createRowBlock(){
@@ -248,60 +245,19 @@ public class SpotSelectionUI extends JFrame {
         block.setLayout(new GridLayout(2,1,0,0));
         block.setBackground(new Color(20,90,60));
         block.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        block.add(createSingleRow(rowCounter++));
-        block.add(createSingleRow(rowCounter++));
+
+        block.add(ParkingRowBuilder.createRow(
+                rowCounter++, vipEnabled, handicapEnabled,
+                this, selectedSpotHolder
+        ));
+
+        block.add(ParkingRowBuilder.createRow(
+                rowCounter++, vipEnabled, handicapEnabled,
+                this, selectedSpotHolder
+        ));
+
+
         return block;
-    }
-
-    private JPanel createSingleRow(int rowIndex){
-        JPanel row = new JPanel(new GridLayout(1,10,0,0));
-        row.setOpaque(false);
-
-        for(int i=0;i<10;i++){
-
-            Color c;
-            String type;
-
-            if(i<3){ c=new Color(30,100,20); type="COMPACT"; }
-            else if(i<6){ c=new Color(0,180,90); type="REGULAR"; }
-            else if(i<8){ c=new Color(140,30,160); type="VIP"; }
-            else{ c=new Color(70,160,220); type="HANDICAP"; }
-
-            JPanel spot=new JPanel();
-            spot.setBackground(c);
-            spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
-
-            if(type.equals("HANDICAP") && !handicapEnabled)
-                spot.setEnabled(false);
-
-            if(type.equals("VIP") && !vipEnabled)
-                spot.setEnabled(false);
-
-            int spotNumber = i + 1;
-
-            spot.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent e) {
-
-                    if(!spot.isEnabled()) return;
-
-                    if(selectedSpot != null)
-                        selectedSpot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
-
-                    spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
-                    selectedSpot = spot;
-
-                    new ConfirmSpotDialog(
-                        SpotSelectionUI.this,
-                        "Floor " + currentFloor +
-                        " Row " + rowIndex +
-                        " Spot " + spotNumber
-                    ).setVisible(true);
-                }
-            });
-
-            row.add(spot);
-        }
-        return row;
     }
 
     private JPanel createLegendBox(Color color,String text){
@@ -342,36 +298,6 @@ public class SpotSelectionUI extends JFrame {
         arrow.setFont(new Font("Arial",Font.BOLD,size));
         arrow.setSize(size+20,size+20);
         return arrow;
-    }
-
-    class RoundedPanel extends JPanel{
-        int r;
-        RoundedPanel(int r){this.r=r;setOpaque(false);}
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g;
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),r,r);
-            super.paintComponent(g);
-        }
-    }
-
-    class RoundedButton extends JButton {
-        Color color;
-        RoundedButton(String text, Color c){
-            super(text);
-            color=c;
-            setForeground(Color.BLACK);
-            setFocusPainted(false);
-            setContentAreaFilled(false);
-            setBorderPainted(false);
-            setFont(new Font("Arial", Font.BOLD, 14));
-        }
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g;
-            g2.setColor(color);
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),30,30);
-            super.paintComponent(g);
-        }
     }
 
     public static void main(String[] args){
