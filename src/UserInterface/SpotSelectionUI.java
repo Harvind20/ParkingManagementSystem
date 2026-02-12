@@ -38,10 +38,10 @@ public class SpotSelectionUI extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         background = new JPanel(null);
-        background.setBackground(new Color(10, 70, 100));
+        background.setBackground(ThemeColors.PRIMARY);
         add(background);
 
-        returnBtn = new RoundedButton("← Return", new Color(255,90,90));
+        returnBtn = new RoundedButton("← Return", ThemeColors.SECONDARY);
         background.add(returnBtn);
 
         floorDropdown = new JComboBox<>(new String[]{
@@ -51,7 +51,7 @@ public class SpotSelectionUI extends JFrame {
         });
 
         floorWrapper = new RoundedPanel(30);
-        floorWrapper.setBackground(new Color(40,190,210));
+        floorWrapper.setBackground(ThemeColors.SECONDARY);
         floorWrapper.setLayout(new BorderLayout());
         floorWrapper.add(floorDropdown);
         background.add(floorWrapper);
@@ -198,7 +198,6 @@ public class SpotSelectionUI extends JFrame {
         upFrom2nd.removeAll();
         entry.removeAll();
 
-        // Reset when returning to 1st floor
         upFrom2nd.setVisible(true);
         exit.setVisible(true);
         arrowExit.setVisible(true);
@@ -220,9 +219,7 @@ public class SpotSelectionUI extends JFrame {
             exit.setVisible(false);
             arrowExit.setVisible(false);
         }
-        else{ // 3rd floor
-
-            // Hide top-left sign AND its arrow
+        else{
             upFrom2nd.setVisible(false);
             downTopLeft.setVisible(false);
 
@@ -243,7 +240,7 @@ public class SpotSelectionUI extends JFrame {
     private JPanel createRowBlock(){
         RoundedPanel block = new RoundedPanel(40);
         block.setLayout(new GridLayout(2,1,0,0));
-        block.setBackground(new Color(20,90,60));
+        block.setBackground(ThemeColors.PRIMARY);
         block.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
 
         block.add(ParkingRowBuilder.createRow(
@@ -256,7 +253,6 @@ public class SpotSelectionUI extends JFrame {
                 this, selectedSpotHolder
         ));
 
-
         return block;
     }
 
@@ -267,7 +263,7 @@ public class SpotSelectionUI extends JFrame {
         box.setBackground(color);
         box.setBounds(0,2,15,15);
         JLabel l=new JLabel(text);
-        l.setForeground(Color.WHITE);
+        l.setForeground(ThemeColors.SECONDARY);
         l.setBounds(25,0,150,20);
         p.add(box);
         p.add(l);
@@ -276,7 +272,7 @@ public class SpotSelectionUI extends JFrame {
 
     private JPanel createSign(String text,int w,int h){
         JPanel p=new JPanel();
-        p.setBackground(new Color(255,190,0));
+        p.setBackground(ThemeColors.SECONDARY);
         p.setSize(w,h);
         p.setLayout(new GridBagLayout());
         p.add(new JLabel(text));
@@ -285,7 +281,7 @@ public class SpotSelectionUI extends JFrame {
 
     private JPanel createVerticalSign(String text,int w,int h){
         JPanel p=new JPanel();
-        p.setBackground(new Color(255,190,0));
+        p.setBackground(ThemeColors.SECONDARY);
         p.setSize(w,h);
         p.setLayout(new GridBagLayout());
         p.add(new JLabel("<html>"+text.replace("", "<br>").trim()+"</html>"));
@@ -294,7 +290,7 @@ public class SpotSelectionUI extends JFrame {
 
     private JLabel createArrow(String symbol,int size){
         JLabel arrow=new JLabel(symbol,SwingConstants.CENTER);
-        arrow.setForeground(new Color(255,210,60));
+        arrow.setForeground(ThemeColors.SECONDARY);
         arrow.setFont(new Font("Arial",Font.BOLD,size));
         arrow.setSize(size+20,size+20);
         return arrow;

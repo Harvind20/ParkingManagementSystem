@@ -25,7 +25,7 @@ public class ParkingRowBuilder {
 
             JPanel spot = new JPanel();
             spot.setBackground(c);
-            spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
+            spot.setBorder(BorderFactory.createLineBorder(ThemeColors.SECONDARY,1));
 
             if(type.equals("HANDICAP") && !handicapEnabled)
                 spot.setEnabled(false);
@@ -43,7 +43,7 @@ public class ParkingRowBuilder {
                     // Remove previous highlight
                     if(selectedSpotHolder[0] != null)
                         selectedSpotHolder[0].setBorder(
-                            BorderFactory.createLineBorder(Color.WHITE,1)
+                            BorderFactory.createLineBorder(ThemeColors.SECONDARY,1)
                         );
 
                     // Highlight selected tile
