@@ -9,22 +9,30 @@ public class MainMenuUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        // Theme colors
+        Color DARK = new Color(0x02,0x34,0x3F);
+        Color CREAM = new Color(0xF0,0xED,0xCC);
+
         // Background panel
         JPanel background = new JPanel();
-        background.setBackground(new Color(10, 70, 100));
+        background.setBackground(DARK);
         background.setLayout(new GridBagLayout());
 
-        // Rounded box panel
+        // Rounded box panel 
         RoundedPanel box = new RoundedPanel(30);
         box.setPreferredSize(new Dimension(240, 340));
-        box.setBackground(Color.LIGHT_GRAY);
+        box.setBackground(CREAM);
         box.setLayout(new GridLayout(3, 1, 15, 25));
         box.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
 
-        // Buttons
-        JButton entryBtn = createRoundedButton("Entry");
-        JButton exitBtn = createRoundedButton("Exit");
-        JButton adminBtn = createRoundedButton("Admin");
+        // Buttons 
+        JButton entryBtn = new RoundedButton("Entry", DARK);
+        JButton exitBtn = new RoundedButton("Exit", DARK);
+        JButton adminBtn = new RoundedButton("Admin", DARK);
+
+        entryBtn.setForeground(CREAM);
+        exitBtn.setForeground(CREAM);
+        adminBtn.setForeground(CREAM);
 
         box.add(entryBtn);
         box.add(exitBtn);
@@ -33,75 +41,22 @@ public class MainMenuUI extends JFrame {
         background.add(box);
         add(background);
 
-        // Temporary actions
-        entryBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Entry pressed")
-        );
+        // Redirect
+        entryBtn.addActionListener(e -> {
+            new EntryPageUI().setVisible(true);
+            dispose();
+        });
 
-        exitBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Exit pressed")
-        );
+        exitBtn.addActionListener(e -> {
+            new ExitPageUI().setVisible(true);
+            dispose();
+        });
 
         adminBtn.addActionListener(e ->
                 JOptionPane.showMessageDialog(this, "Admin pressed")
         );
     }
 
-    // Rounded button creator
-    private JButton createRoundedButton(String text) {
-        JButton button = new JButton(text);
-        button.setFocusPainted(false);
-        button.setBackground(new Color(120, 220, 90));
-        button.setFont(new Font("Arial", Font.BOLD, 14));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        button.setContentAreaFilled(false);
-        button.setOpaque(false);
-
-        button.setUI(new javax.swing.plaf.basic.BasicButtonUI() {
-            @Override
-            public void paint(Graphics g, JComponent c) {
-                JButton b = (JButton) c;
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-                g2.setColor(b.getBackground());
-                g2.fillRoundRect(0, 0, b.getWidth(), b.getHeight(), 30, 30);
-
-                super.paint(g2, c);
-                g2.dispose();
-            }
-        });
-
-        return button;
-    }
-
-    // Rounded panel class
-    class RoundedPanel extends JPanel {
-        private int cornerRadius;
-
-        public RoundedPanel(int radius) {
-            super();
-            this.cornerRadius = radius;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(),
-                    cornerRadius, cornerRadius);
-
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    // Test
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new MainMenuUI().setVisible(true);

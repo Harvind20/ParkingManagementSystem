@@ -15,10 +15,10 @@ public class ConfirmSpotDialog extends JDialog {
         add(wrapper);
 
         RoundedPanel card = new RoundedPanel(25);
-        card.setBackground(new Color(160,160,160));
-        card.setPreferredSize(new Dimension(230,300));
+        card.setBackground(ThemeColors.SECONDARY);
+        card.setPreferredSize(new Dimension(240,310));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
+        card.setBorder(BorderFactory.createEmptyBorder(15,25,15,25)); // padding only
 
         JLabel t1 = createLabel("You");
         JLabel t2 = createLabel("are about to");
@@ -26,19 +26,31 @@ public class ConfirmSpotDialog extends JDialog {
 
         JLabel spot = new JLabel(spotId);
         spot.setAlignmentX(Component.CENTER_ALIGNMENT);
+        spot.setHorizontalAlignment(SwingConstants.CENTER);
         spot.setFont(new Font("Arial",Font.BOLD,16));
-        spot.setForeground(Color.BLACK);
+        spot.setForeground(ThemeColors.PRIMARY);
+        spot.setMaximumSize(new Dimension(220,30));
 
-        JButton cancel = new RoundedButton("Cancel", Color.RED);
-        JButton confirm = new RoundedButton("Confirm", new Color(120,200,80));
+        JButton cancel = new RoundedButton("Cancel", ThemeColors.PRIMARY);
+        JButton confirm = new RoundedButton("Confirm", ThemeColors.PRIMARY);
+
+        cancel.setForeground(ThemeColors.SECONDARY);
+        confirm.setForeground(ThemeColors.SECONDARY);
+
+        cancel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        confirm.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        cancel.setMaximumSize(new Dimension(140,38));
+        confirm.setMaximumSize(new Dimension(140,38));
 
         cancel.addActionListener(e -> dispose());
+
         confirm.addActionListener(e -> {
-            JOptionPane.showMessageDialog(parent,"You parked at " + spotId);
             dispose();
+            new ParkingTicketUI().setVisible(true);
         });
 
-        card.add(Box.createVerticalStrut(35));
+        card.add(Box.createVerticalStrut(30));
         card.add(t1);
         card.add(t2);
         card.add(t3);
@@ -55,40 +67,9 @@ public class ConfirmSpotDialog extends JDialog {
     private JLabel createLabel(String text){
         JLabel l=new JLabel(text);
         l.setAlignmentX(Component.CENTER_ALIGNMENT);
-        l.setForeground(Color.WHITE);
+        l.setHorizontalAlignment(SwingConstants.CENTER);
+        l.setForeground(ThemeColors.PRIMARY);
+        l.setMaximumSize(new Dimension(200,25));
         return l;
-    }
-
-    class RoundedPanel extends JPanel {
-        int r;
-        RoundedPanel(int r){this.r=r;setOpaque(false);}
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),r,r);
-            super.paintComponent(g);
-        }
-    }
-
-    class RoundedButton extends JButton {
-        Color color;
-        RoundedButton(String text, Color c){
-            super(text);
-            color=c;
-            setForeground(Color.WHITE);
-            setFocusPainted(false);
-            setContentAreaFilled(false);
-            setBorderPainted(false);
-            setAlignmentX(Component.CENTER_ALIGNMENT);
-            setMaximumSize(new Dimension(140,38));
-        }
-        protected void paintComponent(Graphics g){
-            Graphics2D g2=(Graphics2D)g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.fillRoundRect(0,0,getWidth(),getHeight(),25,25);
-            super.paintComponent(g);
-        }
     }
 }

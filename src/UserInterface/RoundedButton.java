@@ -8,7 +8,7 @@ public class RoundedButton extends JButton {
     public RoundedButton(String text, Color c){
         super(text);
         color = c;
-        setForeground(Color.BLACK);
+        setForeground(ThemeColors.PRIMARY);
         setFocusPainted(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
