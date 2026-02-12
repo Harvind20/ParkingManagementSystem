@@ -5,12 +5,9 @@ import java.util.*;
 
 public class ParkingLot {
     private ArrayList<Floor> floors = new ArrayList<>();
-    
-    // DAOs
     private TicketDAO ticketDAO = new TicketDAO(); 
     private ParkingSpotDAO spotDAO = new ParkingSpotDAO();
-    private ReceiptDAO receiptDAO = new ReceiptDAO(); // Added ReceiptDAO
-    
+    private ReceiptDAO receiptDAO = new ReceiptDAO();
     final int floorNumber = 3;
 
     private ParkingLot(){
@@ -26,15 +23,10 @@ public class ParkingLot {
         return InstanceHolder.INSTANCE;
     }
     
-    // --- SEQUENCE GENERATION ---
     public int getNextSequenceNumber(String plateNum) {
-        // Count active tickets + past receipts + 1
-        int active = ticketDAO.getTicketCount(plateNum);
-        int past = receiptDAO.getReceiptCount(plateNum);
-        return active + past + 1;
+        return ticketDAO.getTicketCount(plateNum) + 1;
     }
     
-    // --- DATABASE INTEGRATION METHODS ---
     public void saveTicket(Ticket ticket) {
         if (ticket != null) {
             ticketDAO.create(ticket); 
@@ -43,15 +35,19 @@ public class ParkingLot {
     }
 
     public Ticket getTicketByPlate(String plate) {
-        return ticketDAO.findByPlate(plate); 
+        return ticketDAO.findActiveByPlate(plate);
+    }
+
+    public void closeTicket(String ticketId, String plate) {
+        ticketDAO.closeTicket(ticketId); 
+        System.out.println("[DB] Ticket marked COMPLETED for " + plate);
     }
 
     public void removeTicket(String plate) {
-        ticketDAO.delete(plate); 
-        System.out.println("[DB] Ticket closed for " + plate);
+        Ticket t = getTicketByPlate(plate);
+        if(t != null) closeTicket(t.getTicketID(), plate);
     }
 
-    // --- EXISTING FLOOR LOGIC ---
     private void initializeFloors(){
         for(int i = 0; i < floorNumber; i++){
             floors.add(new Floor(i+1));
@@ -60,11 +56,6 @@ public class ParkingLot {
     
     public ArrayList<Floor> getFloors(){ return floors; }
     
-    public Floor getFloor(int index){
-        if (index < 0 || index >= floors.size()) return null;
-        return floors.get(index);
-    }
-
     public void setSpotStatus(String sID, ParkingSpot.Status status){
         ParkingSpot spot = getSpotById(sID);
         if (spot != null) {

@@ -47,15 +47,13 @@ public class Receipt {
         this.paymentMethod = paymentMethod;
         this.ticketId = ticketId;
         this.paymentSuccess = paymentSuccess;
-        
-        // Generate receipt number
+
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String plateSuffix = licensePlate.length() > 4 ? 
             licensePlate.substring(0, 4) : licensePlate;
         this.receiptNumber = "RCP-" + exitTime.format(dtf) + "-" + plateSuffix;
     }
 
-    // --- GETTERS REQUIRED BY RECEIPT DAO ---
     public String getTicketID() { return ticketId; }
     public String getLicensePlate() { return licensePlate; }
     public String getSpotId() { return spotId; }
@@ -64,13 +62,10 @@ public class Receipt {
     public double getHoursParked() { return hoursParked; }
     public double getParkingFee() { return parkingFee; }
     
-    // Maps "getFines" to the fines paid in this specific receipt
     public double getFines() { return finesPaidNow; } 
     
-    // Maps "getAmountPaid" to the total paid (fee + fines)
     public double getAmountPaid() { return totalPaid; }
     
-    // Additional Getters
     public String getPaymentMethod() { return paymentMethod; }
     public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
     public boolean isPaymentSuccess() { return paymentSuccess; }
