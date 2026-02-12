@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseConnection {
-    private static final String URL = "jdbc:sqlite:parking.db";
+    public static final String URL = "jdbc:sqlite:parking_FINAL.db";
 
     public static Connection connect() {
         Connection conn = null;
@@ -22,25 +22,34 @@ public class DatabaseConnection {
         }
         return conn;
     }
+
     public static void initializeDB() {
+        // 1. PARKING SPOTS
         String sqlSpots = "CREATE TABLE IF NOT EXISTS parking_spots ("
                 + " spot_id TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
                 + " status TEXT NOT NULL"
                 + ");";
+
+        // 2. VEHICLES
         String sqlVehicles = "CREATE TABLE IF NOT EXISTS vehicles ("
                 + " plate_num TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
                 + " is_vip BOOLEAN DEFAULT 0"
                 + ");";
+
+        // 3. TICKETS
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
                 + " ticket_id TEXT PRIMARY KEY,"
                 + " plate_num TEXT NOT NULL,"
                 + " spot_id TEXT NOT NULL,"
                 + " entry_time TEXT NOT NULL,"
+                + " status TEXT DEFAULT 'ACTIVE'," 
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num),"
                 + " FOREIGN KEY (spot_id) REFERENCES parking_spots(spot_id)"
                 + ");";
+
+        // 4. FINES
         String sqlFines = "CREATE TABLE IF NOT EXISTS fines ("
                 + " fine_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + " plate_num TEXT NOT NULL,"
@@ -49,6 +58,8 @@ public class DatabaseConnection {
                 + " status TEXT NOT NULL,"
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
+
+        // 5. RECEIPTS
         String sqlReceipts = "CREATE TABLE IF NOT EXISTS receipts ("
                 + " receipt_id TEXT PRIMARY KEY,"
                 + " ticket_id TEXT NOT NULL,"
@@ -60,15 +71,16 @@ public class DatabaseConnection {
                 + " parking_fee REAL NOT NULL,"
                 + " fine_amount REAL NOT NULL,"
                 + " total_paid REAL NOT NULL,"
-                + " payment_method TEXT NOT NULL,"
-                + " FOREIGN KEY (ticket_id) REFERENCES tickets(ticket_id)"
+                + " payment_method TEXT NOT NULL"
                 + ");";
+
+        // 6. ADMIN SETTINGS
         String sqlAdmin = "CREATE TABLE IF NOT EXISTS admin_settings ("
                 + " setting_key TEXT PRIMARY KEY,"
                 + " setting_value TEXT NOT NULL"
                 + ");";
-        String sqlInsertStrategy = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) "
-                + "VALUES ('fine_strategy', 'FIXED');";
+
+        String sqlInsertStrategy = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) VALUES ('fine_strategy', 'FIXED');";
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(sqlSpots);
@@ -78,7 +90,6 @@ public class DatabaseConnection {
             stmt.execute(sqlReceipts);
             stmt.execute(sqlAdmin);
             stmt.execute(sqlInsertStrategy);
-            
             System.out.println("Database tables initialized successfully.");
         } catch (SQLException e) {
             System.out.println("Error initializing Database: " + e.getMessage());

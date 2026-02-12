@@ -15,21 +15,19 @@ import java.util.Map;
 public class ExitSystem {
     private FeeCalculator feeCalculator;
     private FineManager fineManager;
-    private FineDAO fineDAO; // Database for fines
-    private ReceiptDAO receiptDAO; // Database for receipts
+    private FineDAO fineDAO;
+    private ReceiptDAO receiptDAO;
     
-    // In-memory session tracking (volatile data)
     private Map<String, ExitRecord> exitRecords;
     private Map<String, PendingExit> pendingExits;
     
-    // For testing purposes
     private LocalDateTime testTime = null;
     
     public ExitSystem() {
         this.feeCalculator = new FeeCalculator();
         this.fineManager = new FineManager();
-        this.fineDAO = new FineDAO(); // Connect to DB
-        this.receiptDAO = new ReceiptDAO(); // Connect to DB
+        this.fineDAO = new FineDAO();
+        this.receiptDAO = new ReceiptDAO();
         
         this.exitRecords = new HashMap<>();
         this.pendingExits = new HashMap<>();
@@ -50,11 +48,9 @@ public class ExitSystem {
         return LocalDateTime.now();
     }
     
-    // --- STEP 1: INITIATE EXIT ---
     public PendingExit initiateExit(String licensePlate) {
         System.out.println("\n=== Initiating Exit for Vehicle: " + licensePlate + " ===\n");
         
-        // 1. Get Ticket from DB via ParkingLot
         Ticket ticket = ParkingLot.getInstance().getTicketByPlate(licensePlate);
         
         if (ticket == null) {
@@ -67,14 +63,12 @@ public class ExitSystem {
         LocalDateTime entryTime = ticket.getEntryTime();
         LocalDateTime initiationTime = getCurrentTime();
         
-        // 2. Calculate Parking Fee
         double parkingFee = feeCalculator.calculateParkingFee(
             entryTime, initiationTime, ticket.getSpotType(), ticket.getVehicleType()
         );
         
-        // 3. Calculate Fines
         double currentFines = calculateFines(ticket, initiationTime);
-        double unpaidFines = getUnpaidFines(licensePlate); // Fetch from DB
+        double unpaidFines = getUnpaidFines(licensePlate);
         double totalFines = currentFines + unpaidFines;
         double totalDue = parkingFee + totalFines;
         
@@ -96,7 +90,6 @@ public class ExitSystem {
         return pending;
     }
     
-    // --- STEP 2: CHECK UPDATES ---
     public boolean checkForUpdates(String licensePlate) {
         PendingExit pending = pendingExits.get(licensePlate);
         if (pending == null) return false;
@@ -136,7 +129,6 @@ public class ExitSystem {
         return hasChanged;
     }
     
-    // --- STEP 3: CONFIRM EXIT ---
     public Receipt confirmExit(String licensePlate, double parkingFeePayment, 
                               double finePayment, String paymentMethod) {
         
@@ -160,7 +152,6 @@ public class ExitSystem {
         double parkingFee = pending.getParkingFee();
         double totalFinesAvailable = pending.getTotalFines();
         
-        // 1. Process Parking Fee (Must be paid in full)
         double parkingFeePaidAmount = 0.0;
         double change = 0.0;
         
@@ -185,23 +176,17 @@ public class ExitSystem {
             return null;
         }
         
-        // 2. Process Fines
         double finesPaidNow = 0.0;
         if (finePayment > 0) {
             finesPaidNow = Math.min(finePayment, totalFinesAvailable);
             if (finesPaidNow > 0) {
-                // Mark paid fines in DB
-                fineDAO.markFinesAsPaid(licensePlate); // Simplification: Clears all if paying full
+                fineDAO.markFinesAsPaid(licensePlate);
                 System.out.println("Fines Paid: RM " + String.format("%.2f", finesPaidNow));
             }
         }
         
-        // 3. Handle Remaining Fines (New fines + Unpaid balance)
         double remainingFines = totalFinesAvailable - finesPaidNow;
         if (remainingFines > 0) {
-            // Add any NEWLY accrued fines to the DB if they weren't paid
-            // (Existing unpaid fines are already in DB, so we don't re-add them unless we clear and re-add)
-            // Strategy: We only add the *Current Session* fines if they weren't paid.
             double newFines = pending.getCurrentFines();
             if (newFines > 0 && finesPaidNow < totalFinesAvailable) {
                  fineDAO.createFine(licensePlate, newFines, "Overstay/Violation");
@@ -209,15 +194,13 @@ public class ExitSystem {
             System.out.println("Outstanding Fines Recorded: RM " + String.format("%.2f", remainingFines));
         }
 
-        // 4. Cleanup & Save
         ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
-        ParkingLot.getInstance().removeTicket(licensePlate);
-        
+        ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
+        ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
         
         double totalPaid = parkingFeePaidAmount + finesPaidNow;
         
-        // 5. Generate Receipt
         Receipt receipt = new Receipt(
             licensePlate,
             ticket.getEntryTime(),
@@ -228,7 +211,7 @@ public class ExitSystem {
             calculateHoursParked(ticket.getEntryTime(), confirmationTime),
             parkingFee,
             finesPaidNow,
-            totalFinesAvailable, // Total Outstanding
+            totalFinesAvailable,
             parkingFeePaidAmount,
             finesPaidNow,
             totalPaid,
@@ -238,19 +221,16 @@ public class ExitSystem {
             true
         );
         
-        // 6. Save Receipt to DB
         receiptDAO.create(receipt);
         
         System.out.println("\nVehicle exit completed successfully!");
         return receipt;
     }
 
-    // --- HELPER METHODS ---
-    
     public Receipt processExit(String licensePlate, double amountPaid, String paymentMethod) {
         PendingExit pending = initiateExit(licensePlate);
         if (pending == null) return null;
-        return confirmExit(licensePlate, pending.getParkingFee(), 0.0, paymentMethod); // Default: Pay only parking
+        return confirmExit(licensePlate, pending.getParkingFee(), 0.0, paymentMethod);
     }
     
     public Receipt processExit(String licensePlate) {
@@ -266,7 +246,6 @@ public class ExitSystem {
     }
 
     private String parseSpotId(String spotId) {
-        // (Keep your parsing logic here)
         return spotId;
     }
 
@@ -291,9 +270,7 @@ public class ExitSystem {
         fineManager.setFineScheme(scheme);
     }
     
-    // Inner Classes (PendingExit, ExitRecord) - Keep exactly as you wrote them
     public static class PendingExit {
-        // Copy your PendingExit code here exactly
         private String licensePlate;
         private Ticket ticket;
         private String spotId;
@@ -349,6 +326,5 @@ public class ExitSystem {
     }
     
     public static class ExitRecord {
-       // Copy your ExitRecord code here if you use it for reporting
     }
 }

@@ -10,46 +10,24 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
 
     @Override
     public void create(Ticket ticket) {
-        String sql = "INSERT INTO tickets(ticket_id, plate_num, spot_id, entry_time) VALUES(?,?,?,?)";
+        String sql = "INSERT INTO tickets(ticket_id, plate_num, spot_id, entry_time, status) VALUES(?,?,?,?,?)";
+        
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketID());
             pstmt.setString(2, ticket.getLicensePlate());
             pstmt.setString(3, ticket.getSpotId());
             pstmt.setString(4, ticket.getEntryTime().toString());
+            pstmt.setString(5, "ACTIVE");
             pstmt.executeUpdate();
         } catch (SQLException e) {
+            System.out.println("Ticket Create Error: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    @Override
-    public Ticket read(String id) {
-        String sql = "SELECT * FROM tickets WHERE ticket_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, id);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                LocalDateTime time = LocalDateTime.parse(rs.getString("entry_time"));
-                // Note: Reconstructing ticket without original sequence number might result in different ID if regenerated.
-                // ideally, we should store sequence number in DB or trust the ID stored.
-                Ticket t = new Ticket.TicketBuilder()
-                        .addPlate(rs.getString("plate_num"))
-                        .assignSpot(rs.getString("spot_id"))
-                        .addTime(time)
-                        .build();
-                t.setTicketID(rs.getString("ticket_id")); // Force set the ID from DB
-                return t;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    
-    public Ticket findByPlate(String plateNum) {
-        String sql = "SELECT * FROM tickets WHERE plate_num = ?";
+    public Ticket findActiveByPlate(String plateNum) {
+        String sql = "SELECT * FROM tickets WHERE plate_num = ? AND status = 'ACTIVE'";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, plateNum);
@@ -70,38 +48,31 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
         return null;
     }
 
-    public int getTicketCount(String plateNum) {
-        String sql = "SELECT COUNT(*) FROM tickets WHERE plate_num = ?";
+    public void closeTicket(String ticketId) {
+        String sql = "UPDATE tickets SET status = 'COMPLETED' WHERE ticket_id = ?";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, plateNum);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    @Override
-    public void update(Ticket ticket) {}
-
-    @Override
-    public void delete(String plateNum) {
-        String sql = "DELETE FROM tickets WHERE plate_num = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, plateNum);
+            pstmt.setString(1, ticketId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    @Override
-    public List<Ticket> getAll() {
-        return new ArrayList<>();
+    public int getTicketCount(String plateNum) {
+        String sql = "SELECT COUNT(*) FROM tickets WHERE plate_num = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plateNum);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
     }
+
+    @Override public Ticket read(String id) { return null; }
+    @Override public void update(Ticket ticket) {}
+    @Override public void delete(String id) {} 
+    @Override public List<Ticket> getAll() { return new ArrayList<>(); }
+    public Ticket findByPlate(String plate) { return findActiveByPlate(plate); }
 }
