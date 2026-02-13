@@ -1,3 +1,4 @@
+package UserInterface;
 import java.awt.*;
 import javax.swing.*;
 
@@ -10,6 +11,7 @@ public class ParkingRowBuilder {
             SpotSelectionUI ui,
             JPanel[] selectedSpotHolder
     ){
+        System.out.println("createRow() CALLED");
         JPanel row = new JPanel(new GridLayout(1,10,0,0));
         row.setOpaque(false);
 
