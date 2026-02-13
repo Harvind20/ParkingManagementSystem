@@ -17,11 +17,15 @@ public class ParkingRowBuilder {
 
         for(int i=0;i<10;i++){
 
-            String type = getSpotTypeForFloor(floor, rowIndex, i);
+            // FIXED color mapping (same for all floors)
+            String type;
+            if(i < 3) type = "COMPACT";
+            else if(i < 6) type = "REGULAR";
+            else if(i < 8) type = "VIP";
+            else type = "HANDICAP";
 
             Color c;
-            if(type.equals("OCCUPIED")) c = Color.RED;
-            else if(type.equals("COMPACT")) c = new Color(30,100,20);
+            if(type.equals("COMPACT")) c = new Color(30,100,20);
             else if(type.equals("REGULAR")) c = new Color(0,180,90);
             else if(type.equals("VIP")) c = new Color(140,30,160);
             else c = new Color(70,160,220); // HANDICAP
@@ -66,28 +70,5 @@ public class ParkingRowBuilder {
         }
 
         return row;
-    }
-
-    // Mock data (temporary)
-    private static String getSpotTypeForFloor(int floor, int row, int col){
-
-        if(floor == 1){
-            if(col < 3) return "COMPACT";
-            if(col < 6) return "REGULAR";
-            if(col < 8) return "VIP";
-            return "HANDICAP";
-        }
-
-        if(floor == 2){
-            if(col == 3 || col == 4) return "OCCUPIED";
-            if(col < 5) return "REGULAR";
-            if(col < 8) return "VIP";
-            return "HANDICAP";
-        }
-
-        // Floor 3
-        if(col % 2 == 0) return "OCCUPIED";
-        if(col < 5) return "COMPACT";
-        return "REGULAR";
     }
 }
