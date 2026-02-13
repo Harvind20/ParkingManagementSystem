@@ -1,3 +1,4 @@
+package UserInterface;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -139,62 +140,70 @@ public class SpotSelectionUI extends JFrame {
         background.add(arrowUp);
         background.add(arrowDown);
 
+        // Resize listener 
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
-
-                int panelW = background.getWidth();
-                int panelH = background.getHeight();
-
-                int blockW = 700;
-                int blockH = 180;
-
-                int topX = panelW/2 - blockW/2;
-                int topY = panelH/2 - 220;
-
-                int bottomX = topX;
-                int bottomY = panelH/2 + 20;
-
-                topBlock.setBounds(topX, topY, blockW, blockH);
-                bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
-
-                int ly = panelH/2 - 60;
-                legendOccupied.setBounds(40, ly, 180, 20);
-                legendRegular.setBounds(40, ly+30, 180, 20);
-                legendCompact.setBounds(40, ly+60, 180, 20);
-                legendVIP.setBounds(40, ly+90, 180, 20);
-                legendHandicap.setBounds(40, ly+120, 180, 20);
-
-                upFrom2nd.setBounds(0,0,170,70);
-                entry.setBounds(panelW-125,0,130,60);
-                exit.setBounds(panelW-125,65,130,60);
-                lift.setBounds(panelW-70,panelH/2-80,60,160);
-                up.setBounds(0,panelH-70,130,70);
-                down.setBounds(panelW-150,panelH-70,150,70);
-
-                returnBtn.setBounds(panelW/2 - 170, 10, 150, 45);
-                floorWrapper.setBounds(panelW/2 - 5, 10, 180, 45);
-
-                downTopLeft.setLocation(55, 75);
-                downLeftTopBlock.setLocation(topX - 60, topY + 40);
-                downLeftBottomBlock.setLocation(bottomX - 60, bottomY + 40);
-
-                leftTop.setLocation(topX + blockW/2 - 20, topY - 70);
-                rightMiddle1.setLocation(topX + blockW/2 - 20, topY + blockH + 10);
-                rightMiddle2.setLocation(bottomX + blockW/2 - 20, bottomY + blockH + 10);
-
-                upRightTop.setLocation(topX + blockW + 40, topY + 40);
-                upRightBottom.setLocation(bottomX + blockW + 40, bottomY + 40);
-
-                arrowEntry.setLocation(panelW - 200, 2);
-                arrowExit.setLocation(panelW - 200, 65);
-                arrowUp.setLocation(35, panelH - 135);
-                arrowDown.setLocation(panelW - 105, panelH - 135);
+                updateLayoutPositions();
             }
         });
+
+        SwingUtilities.invokeLater(this::updateLayoutPositions);
+    }
+
+    private void updateLayoutPositions(){
+
+        int panelW = background.getWidth();
+        int panelH = background.getHeight();
+
+        if(panelW == 0 || panelH == 0) return;
+
+        int blockW = 700;
+        int blockH = 180;
+
+        int topX = panelW/2 - blockW/2;
+        int topY = panelH/2 - 220;
+
+        int bottomX = topX;
+        int bottomY = panelH/2 + 20;
+
+        topBlock.setBounds(topX, topY, blockW, blockH);
+        bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
+
+        int ly = panelH/2 - 60;
+        legendOccupied.setBounds(40, ly, 180, 20);
+        legendRegular.setBounds(40, ly+30, 180, 20);
+        legendCompact.setBounds(40, ly+60, 180, 20);
+        legendVIP.setBounds(40, ly+90, 180, 20);
+        legendHandicap.setBounds(40, ly+120, 180, 20);
+
+        upFrom2nd.setBounds(0,0,170,70);
+        entry.setBounds(panelW-125,0,130,60);
+        exit.setBounds(panelW-125,65,130,60);
+        lift.setBounds(panelW-70,panelH/2-80,60,160);
+        up.setBounds(0,panelH-70,130,70);
+        down.setBounds(panelW-150,panelH-70,150,70);
+
+        returnBtn.setBounds(panelW/2 - 170, 10, 150, 45);
+        floorWrapper.setBounds(panelW/2 - 5, 10, 180, 45);
+
+        downTopLeft.setLocation(55, 75);
+        downLeftTopBlock.setLocation(topX - 60, topY + 40);
+        downLeftBottomBlock.setLocation(bottomX - 60, bottomY + 40);
+
+        leftTop.setLocation(topX + blockW/2 - 20, topY - 70);
+        rightMiddle1.setLocation(topX + blockW/2 - 20, topY + blockH + 10);
+        rightMiddle2.setLocation(bottomX + blockW/2 - 20, bottomY + blockH + 10);
+
+        upRightTop.setLocation(topX + blockW + 40, topY + 40);
+        upRightBottom.setLocation(bottomX + blockW + 40, bottomY + 40);
+
+        arrowEntry.setLocation(panelW - 200, 2);
+        arrowExit.setLocation(panelW - 200, 65);
+        arrowUp.setLocation(35, panelH - 135);
+        arrowDown.setLocation(panelW - 105, panelH - 135);
     }
 
     private void updateFloorVisuals(int floor){
-
         upFrom2nd.removeAll();
         entry.removeAll();
 
@@ -212,20 +221,16 @@ public class SpotSelectionUI extends JFrame {
         }
         else if(floor==2){
             leftLabel=new JLabel("UP from 3rd Floor");
-
             rightLabel=new JLabel("DOWN from 1st Floor");
             rightLabel.setFont(new Font("Arial",Font.BOLD,11));
-
             exit.setVisible(false);
             arrowExit.setVisible(false);
         }
         else{
             upFrom2nd.setVisible(false);
             downTopLeft.setVisible(false);
-
             rightLabel=new JLabel("DOWN from 2nd Floor");
             rightLabel.setFont(new Font("Arial",Font.BOLD,11));
-
             exit.setVisible(false);
             arrowExit.setVisible(false);
         }
