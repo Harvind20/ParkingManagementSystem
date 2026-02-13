@@ -2,4 +2,5 @@
 *.class
 *.db
 .vscode/
-/bin
+bin/
+*.cmd
