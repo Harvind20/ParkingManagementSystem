@@ -1,8 +1,8 @@
 package UserInterface;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import javax.swing.*;
 
 public class SpotSelectionUI extends JFrame {
 
@@ -140,18 +140,16 @@ public class SpotSelectionUI extends JFrame {
         background.add(arrowUp);
         background.add(arrowDown);
 
-        // Resize listener (existing logic)
+        // Resize listener 
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 updateLayoutPositions();
             }
         });
 
-        // ⭐ CRITICAL FIX — forces layout AFTER window fully loads
         SwingUtilities.invokeLater(this::updateLayoutPositions);
     }
 
-    // ====== NEW METHOD ======
     private void updateLayoutPositions(){
 
         int panelW = background.getWidth();
@@ -204,8 +202,6 @@ public class SpotSelectionUI extends JFrame {
         arrowUp.setLocation(35, panelH - 135);
         arrowDown.setLocation(panelW - 105, panelH - 135);
     }
-
-    // ===== REST OF YOUR CODE UNCHANGED =====
 
     private void updateFloorVisuals(int floor){
         upFrom2nd.removeAll();
