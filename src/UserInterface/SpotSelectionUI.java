@@ -249,13 +249,21 @@ public class SpotSelectionUI extends JFrame {
         block.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
 
         block.add(ParkingRowBuilder.createRow(
-                rowCounter++, vipEnabled, handicapEnabled,
-                this, selectedSpotHolder
+                currentFloor,
+                rowCounter++,
+                vipEnabled,
+                handicapEnabled,
+                this,
+                selectedSpotHolder
         ));
 
         block.add(ParkingRowBuilder.createRow(
-                rowCounter++, vipEnabled, handicapEnabled,
-                this, selectedSpotHolder
+                currentFloor,
+                rowCounter++,
+                vipEnabled,
+                handicapEnabled,
+                this,
+                selectedSpotHolder
         ));
 
         return block;
