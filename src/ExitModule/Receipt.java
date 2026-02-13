@@ -49,11 +49,12 @@ public class Receipt {
         this.paymentSuccess = paymentSuccess;
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        String plateSuffix = licensePlate.length() > 4 ? 
-            licensePlate.substring(0, 4) : licensePlate;
+        String plateSuffix = licensePlate.length() > 8 ? 
+            licensePlate.substring(0, 8) : licensePlate;
         this.receiptNumber = "RCP-" + exitTime.format(dtf) + "-" + plateSuffix;
     }
 
+    public String getReceiptNumber(){return receiptNumber;}
     public String getTicketID() { return ticketId; }
     public String getLicensePlate() { return licensePlate; }
     public String getSpotId() { return spotId; }
@@ -61,11 +62,8 @@ public class Receipt {
     public LocalDateTime getExitTime() { return exitTime; }
     public double getHoursParked() { return hoursParked; }
     public double getParkingFee() { return parkingFee; }
-    
     public double getFines() { return finesPaidNow; } 
-    
     public double getAmountPaid() { return totalPaid; }
-    
     public String getPaymentMethod() { return paymentMethod; }
     public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
     public boolean isPaymentSuccess() { return paymentSuccess; }
