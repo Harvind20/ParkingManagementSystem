@@ -2,10 +2,8 @@ package coreParkingSystem;
 
 import ExitModule.Receipt;
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class ReceiptDAO implements GenericDAO<Receipt, String> {
 
@@ -14,8 +12,7 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
         String sql = "INSERT INTO receipts(receipt_id, ticket_id, plate_num, spot_id, entry_time, exit_time, hours_parked, parking_fee, fine_amount, total_paid, payment_method) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, UUID.randomUUID().toString());
-            // Updated: Use the actual Ticket ID from the Receipt object
+            pstmt.setString(1, receipt.getReceiptNumber());
             pstmt.setString(2, receipt.getTicketID()); 
             pstmt.setString(3, receipt.getLicensePlate());
             pstmt.setString(4, receipt.getSpotId()); 
