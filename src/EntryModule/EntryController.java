@@ -48,8 +48,9 @@ public class EntryController {
         }
 
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
-        
-        // --- NEW: Get Sequence Number ---
+
+        lot.saveVehicle(vehicle);
+
         int seq = lot.getNextSequenceNumber(vehicle.getLicensePlate());
 
         Ticket ticket = new Ticket.TicketBuilder()
@@ -58,12 +59,12 @@ public class EntryController {
                 .assignSpot(selectedSpotID)
                 .addVehicleType(vehicle.getVehicleType())
                 .addSpotType(type.toString()) 
-                .addSequenceNumber(seq) // Pass to builder
+                .addSequenceNumber(seq) 
                 .build();
         
         vehicle.setTicketId(ticket.toString());
+    
         lot.saveTicket(ticket); 
-
         return "SUCCESS: " + ticket.toString();
     }
 

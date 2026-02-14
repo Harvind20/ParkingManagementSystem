@@ -1,9 +1,19 @@
 package UserInterface;
+
+import ExitModule.ExitSystem;
+import ExitModule.ExitSystem.PendingExit;
+import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class ExitPageUI extends JFrame {
+
+    private JLabel lblEntry, lblExit, lblDuration, lblSpot, lblVehicle;
+    private JLabel lblFee, lblFine, lblUnpaid, lblTotal;
+    private JTextField plateField;
+    
+    private PendingExit currentExitData;
 
     public ExitPageUI() {
 
@@ -53,7 +63,7 @@ public class ExitPageUI extends JFrame {
         plateFieldWrapper.setPreferredSize(new Dimension(260,50));
         plateFieldWrapper.setLayout(new BorderLayout());
 
-        JTextField plateField = new JTextField("ABC1234  (Placeholder Text)");
+        plateField = new JTextField("ABC1234"); // Default for testing
         plateField.setBorder(new EmptyBorder(10,15,10,15));
         plateField.setOpaque(false);
         plateField.setForeground(new Color(2,52,63));
@@ -62,9 +72,7 @@ public class ExitPageUI extends JFrame {
         RoundedButton findBtn = new RoundedButton("FIND", new Color(240,237,204));
         findBtn.setPreferredSize(new Dimension(90,50));
 
-        findBtn.addActionListener(e ->
-            JOptionPane.showMessageDialog(this, "Search triggered (DB not connected yet)")
-        );
+        findBtn.addActionListener(e -> performSearch());
 
         inputRow.add(plateFieldWrapper);
         inputRow.add(findBtn);
@@ -81,11 +89,17 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(createText("Parking Summary"));
         summaryCard.add(Box.createVerticalStrut(10));
 
-        summaryCard.add(createText("Entry Time:"));
-        summaryCard.add(createText("Exit Time:"));
-        summaryCard.add(createText("Hours Parked:"));
-        summaryCard.add(createText("Spot Type:"));
-        summaryCard.add(createText("Vehicle Type:"));
+        lblEntry = createText("Entry Time: -");
+        lblExit = createText("Exit Time: -");
+        lblDuration = createText("Hours Parked: -");
+        lblSpot = createText("Spot Type: -");
+        lblVehicle = createText("Vehicle Type: -");
+
+        summaryCard.add(lblEntry);
+        summaryCard.add(lblExit);
+        summaryCard.add(lblDuration);
+        summaryCard.add(lblSpot);
+        summaryCard.add(lblVehicle);
 
         summaryCard.add(Box.createVerticalStrut(15));
 
@@ -95,9 +109,14 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(sep1);
 
         summaryCard.add(Box.createVerticalStrut(10));
-        summaryCard.add(createText("Parking Fee:"));
-        summaryCard.add(createText("Current Fine:"));
-        summaryCard.add(createText("Unpaid Fines:"));
+        
+        lblFee = createText("Parking Fee: -");
+        lblFine = createText("Current Fine: -");
+        lblUnpaid = createText("Unpaid Fines: -");
+
+        summaryCard.add(lblFee);
+        summaryCard.add(lblFine);
+        summaryCard.add(lblUnpaid);
 
         summaryCard.add(Box.createVerticalStrut(10));
 
@@ -107,7 +126,9 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(sep2);
 
         summaryCard.add(Box.createVerticalStrut(10));
-        summaryCard.add(createText("Total Due:"));
+        
+        lblTotal = createText("Total Due: -");
+        summaryCard.add(lblTotal);
 
         gbc.gridy = 3;
         background.add(summaryCard, gbc);
@@ -115,9 +136,12 @@ public class ExitPageUI extends JFrame {
         RoundedButton payBtn = new RoundedButton("Pay Now", new Color(240,237,204));
         payBtn.setPreferredSize(new Dimension(150,50));
 
-        // Redirect to PaymentPageUI
         payBtn.addActionListener(e -> {
-            new PaymentPageUI().setVisible(true);
+            if (currentExitData == null) {
+                JOptionPane.showMessageDialog(this, "Please search for a vehicle first.");
+                return;
+            }
+            new PaymentPageUI(currentExitData).setVisible(true);
             dispose();
         });
 
@@ -131,6 +155,43 @@ public class ExitPageUI extends JFrame {
         l.setFont(new Font("Arial", Font.BOLD, 13));
         l.setForeground(new Color(2,52,63));
         return l;
+    }
+
+    private void performSearch() {
+        String plate = plateField.getText().trim();
+        if (plate.isEmpty() || plate.contains("Placeholder")) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid License Plate.");
+            return;
+        }
+
+        ExitSystem exitSystem = new ExitSystem();
+        currentExitData = exitSystem.initiateExit(plate);
+
+        if (currentExitData == null) {
+            JOptionPane.showMessageDialog(this, "No active ticket found for plate: " + plate, "Search Failed", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm:ss");
+        
+        lblEntry.setText("Entry Time: " + currentExitData.getEntryTime().format(timeFmt));
+        lblExit.setText("Exit Time: " + currentExitData.getInitiatedTime().format(timeFmt));
+        
+        long durationMin = java.time.Duration.between(currentExitData.getEntryTime(), currentExitData.getInitiatedTime()).toMinutes();
+        double durationHrs = Math.ceil(durationMin / 60.0);
+        if(durationMin <= 0) durationHrs = 1.0;
+        
+        lblDuration.setText(String.format("Hours Parked: %.0f hrs", durationHrs));
+        lblSpot.setText("Spot Type: " + currentExitData.getTicket().getSpotType());
+        lblVehicle.setText("Vehicle Type: " + currentExitData.getTicket().getVehicleType());
+        
+        lblFee.setText(String.format("Parking Fee: RM %.2f", currentExitData.getParkingFee()));
+        lblFine.setText(String.format("Current Fine: RM %.2f", currentExitData.getCurrentFines()));
+        lblUnpaid.setText(String.format("Unpaid Fines: RM %.2f", currentExitData.getUnpaidFines()));
+        
+        lblTotal.setText(String.format("Total Due: RM %.2f", currentExitData.getTotalDue()));
+        
+        JOptionPane.showMessageDialog(this, "Vehicle Found! Review summary below.");
     }
 
     public static void main(String[] args){

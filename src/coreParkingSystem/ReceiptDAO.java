@@ -2,6 +2,7 @@ package coreParkingSystem;
 
 import ExitModule.Receipt;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,30 +30,61 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
         }
     }
 
-    public int getReceiptCount(String plateNum) {
-        String sql = "SELECT COUNT(*) FROM receipts WHERE plate_num = ?";
+    public Receipt getLatestReceipt(String plateNum) {
+        String sql = "SELECT r.*, v.type AS v_type, s.type AS s_type " +
+                     "FROM receipts r " +
+                     "LEFT JOIN vehicles v ON r.plate_num = v.plate_num " +
+                     "LEFT JOIN parking_spots s ON r.spot_id = s.spot_id " +
+                     "WHERE r.plate_num = ? " +
+                     "ORDER BY r.exit_time DESC " +
+                     "LIMIT 1";
+
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, plateNum);
             ResultSet rs = pstmt.executeQuery();
+            
             if (rs.next()) {
-                return rs.getInt(1);
+                // Parse Times
+                LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entry_time"));
+                LocalDateTime exitTime = LocalDateTime.parse(rs.getString("exit_time"));
+
+                String vType = rs.getString("v_type");
+                if(vType == null) vType = "Vehicle";
+                
+                String sType = rs.getString("s_type");
+                if(sType == null) sType = "Parking Spot";
+
+                // Reconstruct Receipt Object
+                return new Receipt(
+                    rs.getString("plate_num"),
+                    entryTime,
+                    exitTime,
+                    rs.getString("spot_id"),
+                    sType,
+                    vType,
+                    rs.getDouble("hours_parked"),
+                    rs.getDouble("parking_fee"),
+                    rs.getDouble("fine_amount"),
+                    0.0,
+                    rs.getDouble("parking_fee"),
+                    rs.getDouble("fine_amount"),
+                    rs.getDouble("total_paid"),
+                    0.0,
+                    rs.getString("payment_method"),
+                    rs.getString("ticket_id"),
+                    true
+                );
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return 0;
+        return null;
     }
 
-    @Override
-    public Receipt read(String id) { return null; }
-
-    @Override
-    public void update(Receipt t) {}
-
-    @Override
-    public void delete(String id) {}
-
-    @Override
-    public List<Receipt> getAll() { return new ArrayList<>(); }
+    @Override public Receipt read(String id) { return null; }
+    @Override public void update(Receipt t) {}
+    @Override public void delete(String id) {}
+    @Override public List<Receipt> getAll() { return new ArrayList<>(); }
 }

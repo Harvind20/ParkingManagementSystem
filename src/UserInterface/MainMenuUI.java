@@ -1,6 +1,8 @@
 package UserInterface;
-import javax.swing.*;
+
+import coreParkingSystem.ParkingLot;
 import java.awt.*;
+import javax.swing.*;
 
 public class MainMenuUI extends JFrame {
 
@@ -10,23 +12,19 @@ public class MainMenuUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Theme colors
         Color DARK = new Color(0x02,0x34,0x3F);
         Color CREAM = new Color(0xF0,0xED,0xCC);
 
-        // Background panel
         JPanel background = new JPanel();
         background.setBackground(DARK);
         background.setLayout(new GridBagLayout());
 
-        // Rounded box panel 
         RoundedPanel box = new RoundedPanel(30);
         box.setPreferredSize(new Dimension(240, 340));
         box.setBackground(CREAM);
         box.setLayout(new GridLayout(3, 1, 15, 25));
         box.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
 
-        // Buttons 
         JButton entryBtn = new RoundedButton("Entry", DARK);
         JButton exitBtn = new RoundedButton("Exit", DARK);
         JButton adminBtn = new RoundedButton("Admin", DARK);
@@ -42,15 +40,14 @@ public class MainMenuUI extends JFrame {
         background.add(box);
         add(background);
 
-        // Redirect
         entryBtn.addActionListener(e -> {
             new EntryPageUI().setVisible(true);
             dispose();
         });
 
         exitBtn.addActionListener(e -> {
-            new ExitPageUI().setVisible(true);
-            dispose();
+             new ExitPageUI().setVisible(true); 
+             dispose();
         });
 
         adminBtn.addActionListener(e -> {
@@ -60,6 +57,8 @@ public class MainMenuUI extends JFrame {
     }
 
     public static void main(String[] args) {
+        ParkingLot.getInstance();
+
         SwingUtilities.invokeLater(() -> {
             new MainMenuUI().setVisible(true);
         });

@@ -11,20 +11,15 @@ public class FeeCalculator {
     public double calculateParkingFee(LocalDateTime entryTime, LocalDateTime exitTime, 
                                       String spotType, String vehicleType) {
         
-        // 1. Calculate duration in hours (rounded UP to nearest hour)
         long hours = calculateDurationInHours(entryTime, exitTime);
         
-        // 2. Apply handicapped rules
         if (vehicleType.equalsIgnoreCase("HandicappedVehicle")) {
-            // Handicapped vehicle in handicapped spot = FREE
             if (spotType.equalsIgnoreCase("handicapped")) {
-                return 0.0; // FREE
+                return 0.0;
             }
-            // Handicapped vehicle in any other spot = RM 2/hour
             return hours * 2.0;
         }
         
-        // 3. Regular fee calculation for non-handicapped vehicles
         double hourlyRate = getHourlyRateForSpotType(spotType);
         return hours * hourlyRate;
     }
@@ -68,17 +63,14 @@ public class FeeCalculator {
         
         System.out.println("=== Testing Simplified Fee Calculator ===");
         
-        // Test 1: Handicapped in Handicapped spot = FREE
         double fee = calculator.calculateParkingFee(
             now.minusHours(3), now, "Handicapped", "HandicappedVehicle");
         System.out.println("1. Handicapped in Handicapped spot (3 hours): RM " + fee);
         
-        // Test 2: Handicapped in Regular spot = RM 2/hour
         fee = calculator.calculateParkingFee(
             now.minusHours(3), now, "Regular", "HandicappedVehicle");
         System.out.println("2. Handicapped in Regular spot (3 hours): RM " + fee);
         
-        // Test 3: Regular car in Regular spot = RM 5/hour
         fee = calculator.calculateParkingFee(
             now.minusHours(3), now, "Regular", "Car");
         System.out.println("3. Regular car in Regular spot (3 hours): RM " + fee);

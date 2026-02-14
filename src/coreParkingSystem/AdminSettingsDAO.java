@@ -15,7 +15,7 @@ public class AdminSettingsDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return "FIXED"; // Default fallback
+        return "FIXED";
     }
 
     public void setStrategy(String newStrategy) {

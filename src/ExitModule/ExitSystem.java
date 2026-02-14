@@ -18,8 +18,8 @@ public class ExitSystem {
     private FineDAO fineDAO;
     private ReceiptDAO receiptDAO;
     
-    private Map<String, ExitRecord> exitRecords;
-    private Map<String, PendingExit> pendingExits;
+    private static Map<String, ExitRecord> exitRecords = new HashMap<>();
+    private static Map<String, PendingExit> pendingExits = new HashMap<>();
     
     private LocalDateTime testTime = null;
     
@@ -28,9 +28,6 @@ public class ExitSystem {
         this.fineManager = new FineManager();
         this.fineDAO = new FineDAO();
         this.receiptDAO = new ReceiptDAO();
-        
-        this.exitRecords = new HashMap<>();
-        this.pendingExits = new HashMap<>();
     }
     
     public void setTestTime(LocalDateTime time) {
@@ -111,7 +108,7 @@ public class ExitSystem {
         double currentTotalDue = currentParkingFee + currentFines + unpaidFines;
         
         boolean hasChanged = false;
-        
+
         if (Math.abs(currentParkingFee - pending.getParkingFee()) > 0.01 || currentFines > pending.getCurrentFines()) {
             System.out.println("\nFEES UPDATED due to time elapsed.");
             hasChanged = true;
@@ -142,7 +139,7 @@ public class ExitSystem {
         
         if (checkForUpdates(licensePlate)) {
             System.out.println("\nExit CONFIRMATION BLOCKED - Fees have changed. Review and confirm again.");
-            return null;
+            return null; // Signals UI to refresh
         }
         
         LocalDateTime confirmationTime = getCurrentTime();
@@ -194,7 +191,6 @@ public class ExitSystem {
             System.out.println("Outstanding Fines Recorded: RM " + String.format("%.2f", remainingFines));
         }
 
-        ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
         ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
         ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
@@ -286,11 +282,11 @@ public class ExitSystem {
         private LocalDateTime twentyFourHourThreshold;
         
         public PendingExit(String licensePlate, Ticket ticket, String spotId,
-                          LocalDateTime entryTime, LocalDateTime initiatedTime,
-                          LocalDateTime lastCheckedTime, double parkingFee, 
-                          double currentFines, double unpaidFines, double totalFines,
-                          double totalDue, LocalDateTime nextHourThreshold, 
-                          LocalDateTime twentyFourHourThreshold) {
+                           LocalDateTime entryTime, LocalDateTime initiatedTime,
+                           LocalDateTime lastCheckedTime, double parkingFee, 
+                           double currentFines, double unpaidFines, double totalFines,
+                           double totalDue, LocalDateTime nextHourThreshold, 
+                           LocalDateTime twentyFourHourThreshold) {
             this.licensePlate = licensePlate;
             this.ticket = ticket;
             this.spotId = spotId;
