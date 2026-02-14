@@ -48,24 +48,10 @@ public class EntryController {
         }
 
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
-
-        lot.saveVehicle(vehicle);
-
-        int seq = lot.getNextSequenceNumber(vehicle.getLicensePlate());
-
-        Ticket ticket = new Ticket.TicketBuilder()
-                .addPlate(vehicle.getLicensePlate())
-                .addTime(vehicle.getEntryTime())
-                .assignSpot(selectedSpotID)
-                .addVehicleType(vehicle.getVehicleType())
-                .addSpotType(type.toString()) 
-                .addSequenceNumber(seq) 
-                .build();
-        
-        vehicle.setTicketId(ticket.toString());
-    
-        lot.saveTicket(ticket); 
-        return "SUCCESS: " + ticket.toString();
+        ParkingSpot spot = lot.getSpotById(selectedSpotID);
+        spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
+        lot.updateSpotOccupancy(spot);
+        return "SUCCESS";
     }
 
     private boolean isEntryAllowed(Vehicle v, ParkingSpot.Type spotType) {

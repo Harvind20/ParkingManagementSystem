@@ -70,7 +70,7 @@ public class ConfirmSpotDialog extends JDialog {
             if (result.startsWith("SUCCESS")) {
                 dispose();
                 parent.dispose();
-                new ParkingTicketUI(result, vehicle.getLicensePlate(), backendSpotId).setVisible(true);
+                new MainMenuUI().setVisible(true);
                 
             } else {
                 JOptionPane.showMessageDialog(this, result, "Parking Failed", JOptionPane.ERROR_MESSAGE);

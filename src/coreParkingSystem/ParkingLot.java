@@ -93,7 +93,7 @@ public class ParkingLot {
         return (spot != null) ? spot.getSpotType() : null;
     }
 
-    private ParkingSpot getSpotById(String sID) {
+    public ParkingSpot getSpotById(String sID) {
         String[] idData = sID.split("\\-");
         if(idData.length != 3) return null;
         try {
@@ -105,5 +105,9 @@ public class ParkingLot {
             }
         } catch (Exception e) {}
         return null;
+    }
+
+    public void updateSpotOccupancy(ParkingSpot spot){
+        spotDAO.updateCurrentlyParkedVehicle(spot);
     }
 }

@@ -8,17 +8,13 @@ import java.time.format.DateTimeFormatter;
 public class Ticket {
     private String ticketID;
     private String licensePlate;
-    private String spotID;
     private String vehicleType;
-    private String spotType;
     private LocalDateTime entryTime;
     private int sequenceNumber;
 
     private Ticket(TicketBuilder builder) {
         this.licensePlate = builder.licensePlate;
-        this.spotID = builder.spotID;
         this.vehicleType = builder.vehicleType;
-        this.spotType = builder.spotType;
         this.entryTime = builder.entryTime;
         this.sequenceNumber = builder.sequenceNumber;
         this.ticketID = generateID();
@@ -28,8 +24,6 @@ public class Ticket {
     public Ticket(String plate, String vType, String sId, String sType, LocalDateTime time, int seq) {
         this.licensePlate = plate;
         this.vehicleType = vType;
-        this.spotID = sId;
-        this.spotType = sType;
         this.entryTime = time;
         this.sequenceNumber = seq;
         this.ticketID = generateID();
@@ -42,9 +36,7 @@ public class Ticket {
 
     public String getTicketID() { return ticketID; }
     public String getLicensePlate() { return licensePlate; }
-    public String getSpotId() { return spotID; }
     public String getVehicleType() { return vehicleType; }
-    public String getSpotType() { return spotType; }
     public LocalDateTime getEntryTime() { return entryTime; }
     public int getSequenceNumber() { return sequenceNumber; }
 
@@ -52,14 +44,12 @@ public class Ticket {
 
     @Override
     public String toString() {
-        return "Ticket ID: " + ticketID + " | Spot: " + spotID + " | Type: " + vehicleType;
+        return "Ticket ID: " + ticketID + " | Type: " + vehicleType;
     }
 
     public static class TicketBuilder {
         private String licensePlate;
-        private String spotID;
         private String vehicleType = "Car";
-        private String spotType = "Regular";
         private LocalDateTime entryTime;
         private int sequenceNumber = 1; // Default to 1
 
@@ -68,18 +58,8 @@ public class Ticket {
             return this;
         }
 
-        public TicketBuilder assignSpot(String spotID) {
-            this.spotID = spotID;
-            return this;
-        }
-
         public TicketBuilder addVehicleType(String type) {
             this.vehicleType = type;
-            return this;
-        }
-
-        public TicketBuilder addSpotType(String type) {
-            this.spotType = type;
             return this;
         }
 

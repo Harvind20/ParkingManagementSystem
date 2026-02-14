@@ -27,7 +27,9 @@ public class DatabaseConnection {
         String sqlSpots = "CREATE TABLE IF NOT EXISTS parking_spots ("
                 + " spot_id TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
-                + " status TEXT NOT NULL"
+                + " status TEXT NOT NULL,"
+                + " plate_num TEXT,"
+                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
         String sqlVehicles = "CREATE TABLE IF NOT EXISTS vehicles ("
@@ -39,11 +41,9 @@ public class DatabaseConnection {
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
                 + " ticket_id TEXT PRIMARY KEY,"
                 + " plate_num TEXT NOT NULL,"
-                + " spot_id TEXT NOT NULL,"
                 + " entry_time TEXT NOT NULL,"
                 + " status TEXT DEFAULT 'ACTIVE'," 
-                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num),"
-                + " FOREIGN KEY (spot_id) REFERENCES parking_spots(spot_id)"
+                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
         String sqlFines = "CREATE TABLE IF NOT EXISTS fines ("

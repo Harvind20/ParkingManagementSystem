@@ -8,16 +8,34 @@ public class ParkingSpotDAO implements GenericDAO<ParkingSpot, String> {
 
     @Override
     public void create(ParkingSpot spot) {
-        String sql = "INSERT OR IGNORE INTO parking_spots(spot_id, type, status) VALUES(?,?,?)";
+        String sql = "INSERT OR IGNORE INTO parking_spots(spot_id, type, status,plate_num) VALUES(?,?,?,?)";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, spot.getSpotID());
             pstmt.setString(2, spot.getSpotType().toString());
             pstmt.setString(3, spot.getSpotStatus().toString());
+            pstmt.setString(4, spot.getCurrentlyParkedVehicleID());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public ParkingSpot findByPlate(String plateNum){
+        String sql = "SELECT * FROM parking_spots WHERE plate_num = ?";
+        try(Connection conn = DatabaseConnection.connect();
+        PreparedStatement p = conn.prepareStatement(sql)){
+            p.setString(1, plateNum);
+            ResultSet rs = p.executeQuery();
+            if (rs.next()){
+                ParkingSpot spot = new ParkingSpot(rs.getString("spot_id"), ParkingSpot.Type.valueOf(rs.getString("type")), Integer.parseInt(rs.getString("spot_id").split("-")[2]));
+                return spot;
+            }
+        }
+        catch(SQLException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -49,6 +67,19 @@ public class ParkingSpotDAO implements GenericDAO<ParkingSpot, String> {
             pstmt.setString(2, spot.getSpotID());
             pstmt.executeUpdate();
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateCurrentlyParkedVehicle(ParkingSpot spot){
+        String sql = "UPDATE parking_spots SET plate_num = ? WHERE spot_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, spot.getCurrentlyParkedVehicleID());
+            pstmt.setString(2, spot.getSpotID());
+            pstmt.executeUpdate();
+        } 
+        catch (SQLException e) {
             e.printStackTrace();
         }
     }
