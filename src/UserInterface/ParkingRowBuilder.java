@@ -1,10 +1,10 @@
 package UserInterface;
 import java.awt.*;
-import javax.swing.*;
 
 public class ParkingRowBuilder {
 
     public static JPanel createRow(
+            int floor,
             int rowIndex,
             boolean vipEnabled,
             boolean handicapEnabled,
@@ -17,17 +17,22 @@ public class ParkingRowBuilder {
 
         for(int i=0;i<10;i++){
 
-            Color c;
+            // FIXED color mapping (same for all floors)
             String type;
+            if(i < 3) type = "COMPACT";
+            else if(i < 6) type = "REGULAR";
+            else if(i < 8) type = "VIP";
+            else type = "HANDICAP";
 
-            if(i<3){ c=new Color(30,100,20); type="COMPACT"; }
-            else if(i<6){ c=new Color(0,180,90); type="REGULAR"; }
-            else if(i<8){ c=new Color(140,30,160); type="VIP"; }
-            else{ c=new Color(70,160,220); type="HANDICAP"; }
+            Color c;
+            if(type.equals("COMPACT")) c = new Color(30,100,20);
+            else if(type.equals("REGULAR")) c = new Color(0,180,90);
+            else if(type.equals("VIP")) c = new Color(140,30,160);
+            else c = new Color(70,160,220); // HANDICAP
 
             JPanel spot = new JPanel();
             spot.setBackground(c);
-            spot.setBorder(BorderFactory.createLineBorder(ThemeColors.SECONDARY,1));
+            spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
 
             if(type.equals("HANDICAP") && !handicapEnabled)
                 spot.setEnabled(false);
@@ -37,30 +42,29 @@ public class ParkingRowBuilder {
 
             int spotNumber = i + 1;
 
-            spot.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseClicked(java.awt.event.MouseEvent e) {
+            if(ui != null){
+                spot.addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
 
-                    if(!spot.isEnabled()) return;
+                        if(!spot.isEnabled()) return;
 
-                    // Remove previous highlight
-                    if(selectedSpotHolder[0] != null)
-                        selectedSpotHolder[0].setBorder(
-                            BorderFactory.createLineBorder(ThemeColors.SECONDARY,1)
-                        );
+                        if(selectedSpotHolder[0] != null)
+                            selectedSpotHolder[0].setBorder(
+                                BorderFactory.createLineBorder(Color.WHITE,1)
+                            );
 
-                    // Highlight selected tile
-                    spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
-                    selectedSpotHolder[0] = spot;
+                        spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
+                        selectedSpotHolder[0] = spot;
 
-                    // Use Current floor value from SpotSelectionUI
-                    new ConfirmSpotDialog(
-                        ui,
-                        "Floor " + ui.currentFloor +
-                        " Row " + rowIndex +
-                        " Spot " + spotNumber
-                    ).setVisible(true);
-                }
-            });
+                        new ConfirmSpotDialog(
+                            ui,
+                            "Floor " + ui.currentFloor +
+                            " Row " + rowIndex +
+                            " Spot " + spotNumber
+                        ).setVisible(true);
+                    }
+                });
+            }
 
             row.add(spot);
         }
