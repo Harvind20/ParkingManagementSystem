@@ -27,18 +27,6 @@ public class AdminDashboardUI extends JFrame {
         background.add(tabs);
     }
 
-    private JPanel createPlaceholder(String text){
-        JPanel p = new JPanel(new GridBagLayout());
-        p.setBackground(ThemeColors.PRIMARY);
-
-        JLabel label = new JLabel(text);
-        label.setForeground(ThemeColors.SECONDARY);
-        label.setFont(new Font("Arial", Font.BOLD, 18));
-
-        p.add(label);
-        return p;
-    }
-
     public static void main(String[] args){
         SwingUtilities.invokeLater(() -> new AdminDashboardUI().setVisible(true));
     }
