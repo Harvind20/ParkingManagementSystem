@@ -18,7 +18,7 @@ public class ExitPageUI extends JFrame {
     public ExitPageUI() {
 
         setTitle("Parking Exit");
-        setSize(900, 650);
+        setSize(900, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
