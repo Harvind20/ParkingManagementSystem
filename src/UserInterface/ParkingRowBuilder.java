@@ -17,7 +17,6 @@ public class ParkingRowBuilder {
 
         for(int i=0;i<10;i++){
 
-            // FIXED color mapping (same for all floors)
             String type;
             if(i < 3) type = "COMPACT";
             else if(i < 6) type = "REGULAR";
