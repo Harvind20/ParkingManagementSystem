@@ -5,12 +5,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 
-public class ParkingTicketUI extends JFrame {
-    public ParkingTicketUI() {
-        this("SUCCESS: Ticket ID: T99-TEST | Spot: 1-1-1", "TEST-PLATE", "1-1-1");
-    }
+import coreParkingSystem.ParkingSpotDAO;
+import coreParkingSystem.TicketDAO;
+import coreParkingSystem.VehicleDAO;
 
-    public ParkingTicketUI(String fullSuccessMsg, String plate, String spotId) {
+public class ParkingTicketUI extends JFrame {
+
+    public ParkingTicketUI(String fullSuccessMsg, String plate) {
 
         setTitle("Parking Ticket");
         setSize(900, 600);
@@ -48,11 +49,6 @@ public class ParkingTicketUI extends JFrame {
         } catch(Exception e) {
             cleanTicketID = "Error Parsing ID";
         }
-
-        String floor = "1"; 
-        if (spotId != null && spotId.contains("-")) {
-            floor = spotId.split("-")[0];
-        }
         
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -62,8 +58,6 @@ public class ParkingTicketUI extends JFrame {
         ticket.add(createLabel("Ticket ID: " + cleanTicketID));
         ticket.add(Box.createVerticalStrut(10));
         ticket.add(createLabel("License Plate: " + plate));
-        ticket.add(createLabel("Spot Location: " + spotId));
-        ticket.add(createLabel("Floor Level: " + floor));
         ticket.add(Box.createVerticalStrut(10));
         ticket.add(createLabel("Entry Time: " + now.format(timeFmt)));
         ticket.add(createLabel("Date: " + now.format(dateFmt)));
@@ -75,7 +69,9 @@ public class ParkingTicketUI extends JFrame {
         okBtn.setMaximumSize(new Dimension(120,40));
 
         okBtn.addActionListener(e -> {
-            new MainMenuUI().setVisible(true);
+            // TicketDAO tDAO = new TicketDAO();
+
+            new SpotSelectionUI().setVisible(true);
             dispose();
         });
 
@@ -89,9 +85,5 @@ public class ParkingTicketUI extends JFrame {
         l.setFont(new Font("Arial", Font.BOLD, 14));
         l.setForeground(new Color(2,52,63));
         return l;
-    }
-
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> new ParkingTicketUI().setVisible(true));
     }
 }

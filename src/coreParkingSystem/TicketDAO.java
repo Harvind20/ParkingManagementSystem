@@ -1,6 +1,8 @@
 package coreParkingSystem;
 
 import EntryModule.Ticket;
+import EntryModule.Vehicle;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,15 +12,14 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
 
     @Override
     public void create(Ticket ticket) {
-        String sql = "INSERT INTO tickets(ticket_id, plate_num, spot_id, entry_time, status) VALUES(?,?,?,?,?)";
+        String sql = "INSERT INTO tickets(ticket_id, plate_num, entry_time, status) VALUES(?,?,?,?)";
         
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketID());
             pstmt.setString(2, ticket.getLicensePlate());
-            pstmt.setString(3, ticket.getSpotId());
-            pstmt.setString(4, ticket.getEntryTime().toString());
-            pstmt.setString(5, "ACTIVE");
+            pstmt.setString(3, ticket.getEntryTime().toString());
+            pstmt.setString(4, "ACTIVE");
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Ticket Create Error: " + e.getMessage());
@@ -36,7 +37,6 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
                 LocalDateTime time = LocalDateTime.parse(rs.getString("entry_time"));
                 Ticket t = new Ticket.TicketBuilder()
                         .addPlate(rs.getString("plate_num"))
-                        .assignSpot(rs.getString("spot_id"))
                         .addTime(time)
                         .build();
                 t.setTicketID(rs.getString("ticket_id"));

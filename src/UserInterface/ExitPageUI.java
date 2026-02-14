@@ -207,7 +207,6 @@ public class ExitPageUI extends JFrame {
         if(durationMin <= 0) durationHrs = 1.0;
         
         lblDuration.setText(String.format("Hours Parked: %.0f hrs", durationHrs));
-        lblSpot.setText("Spot Type: " + currentExitData.getTicket().getSpotType());
         lblVehicle.setText("Vehicle Type: " + currentExitData.getTicket().getVehicleType());
         
         lblFee.setText(String.format("Parking Fee: RM %.2f", currentExitData.getParkingFee()));

@@ -1,6 +1,8 @@
 package UserInterface;
 
 import EntryModule.*;
+import coreParkingSystem.ParkingLot;
+
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -144,8 +146,18 @@ public class EntryPageUI extends JFrame {
                     vehicle = new Car(plate);
             }
 
+            Ticket ticket = new Ticket.TicketBuilder()
+                .addPlate(vehicle.getLicensePlate())
+                .addTime(vehicle.getEntryTime())
+                .addVehicleType(vehicle.getVehicleType())
+                .addSequenceNumber(ParkingLot.getInstance().getNextSequenceNumber(vehicle.getLicensePlate()))
+                .build();
+            vehicle.setTicketId(ticket.toString());
+            ParkingLot.getInstance().saveVehicle(vehicle);
+            ParkingLot.getInstance().saveTicket(ticket);
+            new ParkingTicketUI("SUCCESS: "+ticket.toString(),vehicle.getLicensePlate());
+
             SpotSelectionUI spotUI = new SpotSelectionUI(vehicle); 
-            
             spotUI.vipEnabled = isVip; 
             spotUI.handicapEnabled = isHandicap || (vehicle instanceof HandicappedVehicle);
 
