@@ -1,7 +1,6 @@
 package coreParkingSystem;
 
 import EntryModule.Ticket;
-import EntryModule.Vehicle;
 
 import java.sql.*;
 import java.time.LocalDateTime;

@@ -5,10 +5,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 
-import coreParkingSystem.ParkingSpotDAO;
-import coreParkingSystem.TicketDAO;
-import coreParkingSystem.VehicleDAO;
-
 public class ParkingTicketUI extends JFrame {
 
     public ParkingTicketUI(String fullSuccessMsg, String plate) {
@@ -69,8 +65,6 @@ public class ParkingTicketUI extends JFrame {
         okBtn.setMaximumSize(new Dimension(120,40));
 
         okBtn.addActionListener(e -> {
-            // TicketDAO tDAO = new TicketDAO();
-
             new SpotSelectionUI().setVisible(true);
             dispose();
         });
