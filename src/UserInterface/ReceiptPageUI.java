@@ -1,11 +1,25 @@
 package UserInterface;
+
+import ExitModule.Receipt;
+import coreParkingSystem.ReceiptDAO;
+import java.awt.*;
+import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class ReceiptPageUI extends JFrame {
 
     public ReceiptPageUI() {
+        this((Receipt)null); 
+    }
+
+    public ReceiptPageUI(String licensePlate) {
+        this(new ReceiptDAO().getLatestReceipt(licensePlate));
+        if (licensePlate != null && this.getTitle().equals("Receipt")) {
+        }
+    }
+
+    public ReceiptPageUI(Receipt receipt) {
 
         setTitle("Receipt");
         setSize(1000, 700);
@@ -29,32 +43,40 @@ public class ReceiptPageUI extends JFrame {
 
         card.add(Box.createVerticalStrut(25));
 
-        card.add(createCenter("License Plate:", 14, false));
-        card.add(createCenter("Date:", 14, false));
+        String plate = (receipt != null) ? receipt.getLicensePlate() : "No Record Found";
+        String dateStr = (receipt != null) ? receipt.getExitTime().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "-";
+        
+        card.add(createCenter("License Plate: " + plate, 14, false));
+        card.add(createCenter("Date: " + dateStr, 14, false));
 
         card.add(Box.createVerticalStrut(18));
 
-        card.add(createCenter("Entry Time:", 14, false));
-        card.add(createCenter("Exit Time:", 14, false));
-        card.add(createCenter("Duration:", 14, false));
+        String entryStr = (receipt != null) ? receipt.getEntryTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : "-";
+        String exitStr = (receipt != null) ? receipt.getExitTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")) : "-";
+        String durationStr = (receipt != null) ? String.format("%.1f hours", receipt.getHoursParked()) : "-";
+
+        card.add(createCenter("Entry Time: " + entryStr, 14, false));
+        card.add(createCenter("Exit Time: " + exitStr, 14, false));
+        card.add(createCenter("Duration: " + durationStr, 14, false));
 
         card.add(Box.createVerticalStrut(20));
 
         card.add(createCenter("Parking Fee Breakdown", 15, true));
         card.add(Box.createVerticalStrut(10));
 
-        card.add(createCenter("Hourly Rate:", 14, false));
-        card.add(createCenter("Parking Fee:", 14, false));
-        card.add(createCenter("Current Fine:", 14, false));
-        card.add(createCenter("Outstanding Fine:", 14, false));
-        card.add(createCenter("Total:", 14, false));
-
+        String feeStr = (receipt != null) ? String.format("RM %.2f", receipt.getParkingFee()) : "-";
+        String finesPaidStr = (receipt != null) ? String.format("RM %.2f", receipt.getFines()) : "-"; 
+        
+        card.add(createCenter("Parking Fee: " + feeStr, 14, false));
+        card.add(createCenter("Fines Paid: " + finesPaidStr, 14, false));
+        
         card.add(Box.createVerticalStrut(20));
 
-        card.add(createCenter("Payment Method:", 14, false));
-        card.add(createCenter("Total Paid:", 14, false));
-        card.add(createCenter("Balance:", 14, false));
-        card.add(createCenter("New Outstanding Fine:", 14, false));
+        String method = (receipt != null) ? receipt.getPaymentMethod() : "-";
+        String totalPaidStr = (receipt != null) ? String.format("RM %.2f", receipt.getAmountPaid()) : "-";
+
+        card.add(createCenter("Payment Method: " + method, 14, false));
+        card.add(createCenter("Total Paid: " + totalPaidStr, 14, false));
 
         card.add(Box.createVerticalStrut(28));
 
@@ -86,6 +108,8 @@ public class ReceiptPageUI extends JFrame {
     }
 
     public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> new ReceiptPageUI().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            new ReceiptPageUI("ABC1234").setVisible(true);
+        });
     }
 }

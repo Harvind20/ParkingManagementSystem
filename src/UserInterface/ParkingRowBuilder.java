@@ -1,6 +1,9 @@
 package UserInterface;
-import javax.swing.*;
+
+import coreParkingSystem.ParkingLot;
+import coreParkingSystem.ParkingSpot;
 import java.awt.*;
+import javax.swing.*;
 
 public class ParkingRowBuilder {
 
@@ -16,27 +19,43 @@ public class ParkingRowBuilder {
         row.setOpaque(false);
 
         for(int i=0;i<10;i++){
+            int spotNumber = i + 1;
+            
+            String spotIdBackend = floor + "-" + rowIndex + "-" + spotNumber;
 
-            String type = getSpotTypeForFloor(floor, rowIndex, i);
+            ParkingLot lot = ParkingLot.getInstance();
+            ParkingSpot.Status status = lot.getSpotStatus(spotIdBackend);
+            ParkingSpot.Type typeEnum = lot.getSpotType(spotIdBackend);
+            
+            String typeString = (typeEnum != null) ? typeEnum.toString() : getMockType(floor, i);
+            boolean isOccupied = (status == ParkingSpot.Status.OCCUPIED);
 
             Color c;
-            if(type.equals("OCCUPIED")) c = Color.RED;
-            else if(type.equals("COMPACT")) c = new Color(30,100,20);
-            else if(type.equals("REGULAR")) c = new Color(0,180,90);
-            else if(type.equals("VIP")) c = new Color(140,30,160);
-            else c = new Color(70,160,220); // HANDICAP
+            if(isOccupied) {
+                c = Color.RED;
+            } else if(typeString.equals("COMPACT")) {
+                c = new Color(30,100,20);
+            } else if(typeString.equals("REGULAR")) {
+                c = new Color(0,180,90);
+            } else if(typeString.equals("VIP") || typeString.equals("RESERVED")) {
+                c = new Color(140,30,160);
+            } else {
+                c = new Color(70,160,220); // HANDICAPPED
+            }
 
             JPanel spot = new JPanel();
             spot.setBackground(c);
             spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
 
-            if(type.equals("HANDICAP") && !handicapEnabled)
-                spot.setEnabled(false);
+            boolean isAllowed = true;
+            if(isOccupied) isAllowed = false;
+            if((typeString.equals("HANDICAPPED") || typeString.equals("HANDICAP")) && !handicapEnabled) isAllowed = false;
+            if((typeString.equals("VIP") || typeString.equals("RESERVED")) && !vipEnabled) isAllowed = false;
 
-            if(type.equals("VIP") && !vipEnabled)
+            if(!isAllowed) {
                 spot.setEnabled(false);
-
-            int spotNumber = i + 1;
+                if(!isOccupied) spot.setBackground(c.darker());
+            }
 
             if(ui != null){
                 spot.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -51,10 +70,9 @@ public class ParkingRowBuilder {
 
                         spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
                         selectedSpotHolder[0] = spot;
-
                         new ConfirmSpotDialog(
                             ui,
-                            "Floor " + ui.currentFloor +
+                            "Floor " + floor +
                             " Row " + rowIndex +
                             " Spot " + spotNumber
                         ).setVisible(true);
@@ -68,26 +86,19 @@ public class ParkingRowBuilder {
         return row;
     }
 
-    // Mock data (temporary)
-    private static String getSpotTypeForFloor(int floor, int row, int col){
-
+    private static String getMockType(int floor, int col){
         if(floor == 1){
             if(col < 3) return "COMPACT";
             if(col < 6) return "REGULAR";
             if(col < 8) return "VIP";
-            return "HANDICAP";
+            return "HANDICAPPED";
         }
-
         if(floor == 2){
-            if(col == 3 || col == 4) return "OCCUPIED";
             if(col < 5) return "REGULAR";
             if(col < 8) return "VIP";
-            return "HANDICAP";
+            return "HANDICAPPED";
         }
-
-        // Floor 3
-        if(col % 2 == 0) return "OCCUPIED";
-        if(col < 5) return "COMPACT";
-        return "REGULAR";
+        if(col % 2 == 0) return "REGULAR";
+        return "COMPACT";
     }
 }

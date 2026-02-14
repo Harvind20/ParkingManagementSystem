@@ -12,7 +12,7 @@ public class Ticket {
     private String vehicleType;
     private String spotType;
     private LocalDateTime entryTime;
-    private int sequenceNumber; // New field for AutoIncrement
+    private int sequenceNumber;
 
     private Ticket(TicketBuilder builder) {
         this.licensePlate = builder.licensePlate;
@@ -37,7 +37,6 @@ public class Ticket {
 
     private String generateID() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-        // Format: T<Seq>-<Plate>-<Time>
         return "T" + sequenceNumber + "-" + licensePlate + "-" + entryTime.format(dtf);
     }
 
