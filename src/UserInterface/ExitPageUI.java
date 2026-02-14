@@ -22,9 +22,33 @@ public class ExitPageUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel background = new JPanel(new GridBagLayout());
-        background.setBackground(new Color(2,52,63)); // #02343F
+        Color DARK = new Color(2,52,63);
+        Color CREAM = new Color(240,237,204);
+
+        JPanel background = new JPanel(new BorderLayout());
+        background.setBackground(DARK);
         add(background);
+
+        // Return button
+        JButton returnBtn = new RoundedButton("Return", CREAM);
+        returnBtn.setForeground(DARK);
+        returnBtn.setPreferredSize(new Dimension(100, 35));
+
+        returnBtn.addActionListener(e -> {
+            new MainMenuUI().setVisible(true);
+            dispose();
+        });
+
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        topBar.setBackground(DARK);
+        topBar.add(returnBtn);
+
+        background.add(topBar, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
+
+        background.add(centerPanel, BorderLayout.CENTER);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -32,44 +56,44 @@ public class ExitPageUI extends JFrame {
         gbc.insets = new Insets(10,0,10,0);
 
         RoundedPanel titleCard = new RoundedPanel(25);
-        titleCard.setBackground(new Color(240,237,204)); // #F0EDCC
+        titleCard.setBackground(CREAM);
         titleCard.setPreferredSize(new Dimension(360,80));
         titleCard.setLayout(new GridLayout(2,1));
 
         JLabel title = new JLabel("Parking Exit", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 15));
-        title.setForeground(new Color(2,52,63));
+        title.setForeground(DARK);
 
         JLabel subtitle = new JLabel("Retrieve Vehicle Details and Complete Payment", SwingConstants.CENTER);
         subtitle.setFont(new Font("Arial", Font.PLAIN, 12));
-        subtitle.setForeground(new Color(2,52,63));
+        subtitle.setForeground(DARK);
 
         titleCard.add(title);
         titleCard.add(subtitle);
 
         gbc.gridy = 0;
-        background.add(titleCard, gbc);
+        centerPanel.add(titleCard, gbc);
 
         JLabel plateLabel = new JLabel("Number Plate");
-        plateLabel.setForeground(new Color(240,237,204));
+        plateLabel.setForeground(CREAM);
         gbc.gridy = 1;
-        background.add(plateLabel, gbc);
+        centerPanel.add(plateLabel, gbc);
 
         JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         inputRow.setOpaque(false);
 
         RoundedPanel plateFieldWrapper = new RoundedPanel(20);
-        plateFieldWrapper.setBackground(new Color(240,237,204));
+        plateFieldWrapper.setBackground(CREAM);
         plateFieldWrapper.setPreferredSize(new Dimension(260,50));
         plateFieldWrapper.setLayout(new BorderLayout());
 
-        plateField = new JTextField("ABC1234"); // Default for testing
+        plateField = new JTextField("ABC1234");
         plateField.setBorder(new EmptyBorder(10,15,10,15));
         plateField.setOpaque(false);
-        plateField.setForeground(new Color(2,52,63));
+        plateField.setForeground(DARK);
         plateFieldWrapper.add(plateField);
 
-        RoundedButton findBtn = new RoundedButton("FIND", new Color(240,237,204));
+        RoundedButton findBtn = new RoundedButton("FIND", CREAM);
         findBtn.setPreferredSize(new Dimension(90,50));
 
         findBtn.addActionListener(e -> performSearch());
@@ -78,10 +102,10 @@ public class ExitPageUI extends JFrame {
         inputRow.add(findBtn);
 
         gbc.gridy = 2;
-        background.add(inputRow, gbc);
+        centerPanel.add(inputRow, gbc);
 
         RoundedPanel summaryCard = new RoundedPanel(25);
-        summaryCard.setBackground(new Color(240,237,204));
+        summaryCard.setBackground(CREAM);
         summaryCard.setPreferredSize(new Dimension(400,300));
         summaryCard.setLayout(new BoxLayout(summaryCard, BoxLayout.Y_AXIS));
         summaryCard.setBorder(new EmptyBorder(15,20,15,20));
@@ -104,8 +128,8 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(Box.createVerticalStrut(15));
 
         JSeparator sep1 = new JSeparator();
-        sep1.setForeground(new Color(2,52,63));
-        sep1.setBackground(new Color(2,52,63));
+        sep1.setForeground(DARK);
+        sep1.setBackground(DARK);
         summaryCard.add(sep1);
 
         summaryCard.add(Box.createVerticalStrut(10));
@@ -121,8 +145,8 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(Box.createVerticalStrut(10));
 
         JSeparator sep2 = new JSeparator();
-        sep2.setForeground(new Color(2,52,63));
-        sep2.setBackground(new Color(2,52,63));
+        sep2.setForeground(DARK);
+        sep2.setBackground(DARK);
         summaryCard.add(sep2);
 
         summaryCard.add(Box.createVerticalStrut(10));
@@ -131,9 +155,9 @@ public class ExitPageUI extends JFrame {
         summaryCard.add(lblTotal);
 
         gbc.gridy = 3;
-        background.add(summaryCard, gbc);
+        centerPanel.add(summaryCard, gbc);
 
-        RoundedButton payBtn = new RoundedButton("Pay Now", new Color(240,237,204));
+        RoundedButton payBtn = new RoundedButton("Pay Now", CREAM);
         payBtn.setPreferredSize(new Dimension(150,50));
 
         payBtn.addActionListener(e -> {
@@ -147,7 +171,7 @@ public class ExitPageUI extends JFrame {
 
         gbc.gridy = 4;
         gbc.insets = new Insets(25,0,10,0);
-        background.add(payBtn, gbc);
+        centerPanel.add(payBtn, gbc);
     }
 
     private JLabel createText(String text){

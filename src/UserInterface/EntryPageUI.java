@@ -16,9 +16,27 @@ public class EntryPageUI extends JFrame {
         Color DARK = new Color(0x02,0x34,0x3F);
         Color CREAM = new Color(0xF0,0xED,0xCC);
 
-        JPanel background = new JPanel();
+        JPanel background = new JPanel(new BorderLayout());
         background.setBackground(DARK);
-        background.setLayout(new GridBagLayout());
+
+        // Return button to go back to main menu
+        JButton returnBtn = new RoundedButton("Return", CREAM);
+        returnBtn.setForeground(DARK);
+        returnBtn.setPreferredSize(new Dimension(100, 35));
+
+        returnBtn.addActionListener(e -> {
+            new MainMenuUI().setVisible(true);
+            dispose();
+        });
+
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        topBar.setBackground(DARK);
+        topBar.add(returnBtn);
+
+        background.add(topBar, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -42,7 +60,7 @@ public class EntryPageUI extends JFrame {
         titleBox.add(subtitle);
 
         gbc.gridy = 0;
-        background.add(titleBox, gbc);
+        centerPanel.add(titleBox, gbc);
 
         JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 15));
         formPanel.setOpaque(false);
@@ -75,10 +93,9 @@ public class EntryPageUI extends JFrame {
         formPanel.add(vipCheck); formPanel.add(handicapCheck);
 
         gbc.gridy = 1;
-        background.add(formPanel, gbc);
+        centerPanel.add(formPanel, gbc);
 
-        RoundedButton nextBtn = new RoundedButton("Next", DARK); 
-        nextBtn.setBackground(CREAM); 
+        RoundedButton nextBtn = new RoundedButton("Park", CREAM); 
         nextBtn.setForeground(DARK);
         nextBtn.setPreferredSize(new Dimension(120, 40));
 
@@ -118,8 +135,9 @@ public class EntryPageUI extends JFrame {
         });
 
         gbc.gridy = 2;
-        background.add(nextBtn, gbc);
+        centerPanel.add(nextBtn, gbc);
 
+        background.add(centerPanel, BorderLayout.CENTER);
         add(background);
     }
 
