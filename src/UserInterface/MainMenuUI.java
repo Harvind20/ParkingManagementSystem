@@ -50,9 +50,10 @@ public class MainMenuUI extends JFrame {
              dispose();
         });
 
-        adminBtn.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Admin Module Not Connected in this Demo")
-        );
+        adminBtn.addActionListener(e -> {
+            new AdminDashboardUI().setVisible(true);
+            dispose();
+        });
     }
 
     public static void main(String[] args) {
