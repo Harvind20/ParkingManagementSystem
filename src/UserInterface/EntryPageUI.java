@@ -71,7 +71,7 @@ public class EntryPageUI extends JFrame {
         l1.setFont(new Font("Arial", Font.BOLD, 14));
         
         RoundedTextField plateField = new RoundedTextField(15);
-        plateField.setText("PLT-" + (int)(Math.random()*1000)); 
+        plateField.setText("PLT" + (int)(Math.random()*1000));
 
         JLabel l2 = new JLabel("Vehicle Type:");
         l2.setForeground(CREAM);
@@ -104,9 +104,28 @@ public class EntryPageUI extends JFrame {
             String vType = (String) typeBox.getSelectedItem();
             boolean isVip = vipCheck.isSelected();
             boolean isHandicap = handicapCheck.isSelected();
+            int specialCharacterCount = 0;
+            int numOfDigits = 0;
 
+            plate = plate.toUpperCase();
             if(plate.isEmpty()){
                 JOptionPane.showMessageDialog(this, "Please enter a License Plate.");
+                return;
+            }
+            for (int i = 0; i < plate.length();i++){
+                if (!(Character.isLetterOrDigit(plate.charAt(i)))){
+                    specialCharacterCount += 1;
+                }
+                else if((Character.isDigit(plate.charAt(i)))){
+                    numOfDigits += 1;
+                }
+            }
+            if (specialCharacterCount > 0){
+                JOptionPane.showMessageDialog(this, "No special characters allowed in license plate.");
+                return;
+            }
+            else if (numOfDigits <= 0){
+                JOptionPane.showMessageDialog(this, "License plate requires at least one number.");
                 return;
             }
 

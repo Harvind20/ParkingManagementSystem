@@ -183,6 +183,7 @@ public class ExitPageUI extends JFrame {
 
     private void performSearch() {
         String plate = plateField.getText().trim();
+        plate = plate.toUpperCase();
         if (plate.isEmpty() || plate.contains("Placeholder")) {
             JOptionPane.showMessageDialog(this, "Please enter a valid License Plate.");
             return;
