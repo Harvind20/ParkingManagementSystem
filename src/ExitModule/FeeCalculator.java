@@ -80,5 +80,13 @@ public class FeeCalculator {
         fee = calculator.calculateParkingFee(
             now.minusHours(3), now, "Regular", "Car");
         System.out.println("3. Regular car in Regular spot (3 hours): RM " + fee);
+
+        fee = calculator.calculateParkingFee(
+            now.minusHours(3),
+            now,
+            "HANDICAP",
+            "HandicappedVehicle"
+        );
+        System.out.println("4. Handicapped in HANDICAP spot (3 hours): RM " + fee);
     }
 }
