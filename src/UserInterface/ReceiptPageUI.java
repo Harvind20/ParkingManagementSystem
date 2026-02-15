@@ -29,11 +29,11 @@ public class ReceiptPageUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         JPanel background = new JPanel(new GridBagLayout());
-        background.setBackground(new Color(2,52,63)); // #02343F
+        background.setBackground(new Color(2,52,63));
         add(background);
 
         RoundedPanel card = new RoundedPanel(30);
-        card.setBackground(new Color(240,237,204)); // #F0EDCC
+        card.setBackground(new Color(240,237,204)); 
         card.setPreferredSize(new Dimension(720,600));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(30,40,30,40));
@@ -79,6 +79,10 @@ public class ReceiptPageUI extends JFrame {
 
         card.add(createCenter("Payment Method: " + method, 14, false));
         card.add(createCenter("Total Paid: " + totalPaidStr, 14, false));
+        
+        if (receipt != null && receipt.getPaymentMethod().equalsIgnoreCase("CASH") && receipt.getChange() > 0) {
+            card.add(createCenter("Change: " + String.format("RM %.2f", receipt.getChange()), 14, false));
+        }
 
         card.add(Box.createVerticalStrut(28));
 

@@ -17,8 +17,8 @@ public class PaymentPageUI extends JFrame {
 
     private JLabel feeOnlyAmount;
     private JLabel fullTotal;
-    private JLabel partialTotal;
     private JRadioButton full;
+    private JRadioButton feeOnly;
 
     public PaymentPageUI() {
         this(null);
@@ -77,42 +77,27 @@ public class PaymentPageUI extends JFrame {
         totalFines = (pendingExit != null) ? pendingExit.getCurrentFines() + pendingExit.getUnpaidFines() : 50.0;
         double totalAll = parkingFee + totalFines;
 
+        boolean isBlocked = totalFines >= 500.0;
+
         selectedTotal = totalAll;
         fineAmountToPay = totalFines;
 
         RoundedPanel feeBox = createBox();
 
-        JRadioButton feeOnly = new JRadioButton("Pay Ticket Fee Only");
+        feeOnly = new JRadioButton("Pay Ticket Fee Only");
         styleRadio(feeOnly);
         feeOnlyAmount = centerText("RM " + String.format("%.2f", parkingFee));
+
+        if (isBlocked) {
+            feeOnly.setEnabled(false);
+            feeOnly.setText("Pay Ticket Fee Only (Blocked: Fines > RM500)");
+            feeOnlyAmount.setText("Mandatory Full Payment");
+        }
 
         feeBox.add(centerRow(feeOnly));
         feeBox.add(feeOnlyAmount);
 
         mainCard.add(feeBox);
-        mainCard.add(Box.createVerticalStrut(12));
-
-        RoundedPanel partialBox = createBox();
-
-        JRadioButton partial = new JRadioButton("Ticket Fee + Partial Fine Payment");
-        styleRadio(partial);
-
-        JPanel partialRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        partialRow.setOpaque(false);
-        JLabel partialLabel = new JLabel("Amount to pay towards fines: RM ");
-        partialLabel.setForeground(new Color(2,52,63));
-        JTextField partialInput = new JTextField(8);
-        partialRow.add(partialLabel);
-        partialRow.add(partialInput);
-
-        partialTotal = centerText("Total: RM -");
-        partialInput.setEnabled(false);
-
-        partialBox.add(centerRow(partial));
-        partialBox.add(partialRow);
-        partialBox.add(partialTotal);
-
-        mainCard.add(partialBox);
         mainCard.add(Box.createVerticalStrut(12));
 
         RoundedPanel fullBox = createBox();
@@ -130,53 +115,16 @@ public class PaymentPageUI extends JFrame {
 
         ButtonGroup amountGroup = new ButtonGroup();
         amountGroup.add(feeOnly);
-        amountGroup.add(partial);
         amountGroup.add(full);
 
         feeOnly.addActionListener(e -> {
             selectedTotal = parkingFee;
             fineAmountToPay = 0.0;
-            partialInput.setEnabled(false);
-            partialInput.setText("");
-            partialTotal.setText("Total: RM -");
         });
 
         full.addActionListener(e -> {
             selectedTotal = parkingFee + totalFines;
             fineAmountToPay = totalFines;
-            partialInput.setEnabled(false);
-            partialInput.setText("");
-            partialTotal.setText("Total: RM -");
-        });
-
-        partial.addActionListener(e -> {
-            partialInput.setEnabled(true);
-            selectedTotal = parkingFee;
-            fineAmountToPay = 0.0;
-            partialTotal.setText("Total: RM " + String.format("%.2f", parkingFee));
-        });
-
-        partialInput.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                if (partial.isSelected()) {
-                    try {
-                        String text = partialInput.getText();
-                        if(text.isEmpty()) {
-                            selectedTotal = parkingFee;
-                            fineAmountToPay = 0.0;
-                            partialTotal.setText("Total: RM " + String.format("%.2f", selectedTotal));
-                            return;
-                        }
-                        double pFine = Double.parseDouble(text);
-                        if (pFine > totalFines) pFine = totalFines;
-                        fineAmountToPay = pFine;
-                        selectedTotal = parkingFee + pFine;
-                        partialTotal.setText("Total: RM " + String.format("%.2f", selectedTotal));
-                    } catch (NumberFormatException e) {
-                        partialTotal.setText("Total: Invalid Input");
-                    }
-                }
-            }
         });
 
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER,25,0));
@@ -192,16 +140,22 @@ public class PaymentPageUI extends JFrame {
 
             double oldFee = pendingExit.getParkingFee();
             double oldFines = pendingExit.getCurrentFines();
+            
+            double parkingAmountToSend = pendingExit.getParkingFee();
 
             if (methodDropdown.getSelectedItem().equals("Cash")) {
                 try {
                     String cashText = cashInput.getText().trim();
                     if(cashText.isEmpty()) throw new NumberFormatException();
                     double cashGiven = Double.parseDouble(cashText);
+                    
                     if (cashGiven < selectedTotal) {
                         JOptionPane.showMessageDialog(this, "Insufficient Cash! Need: RM " + String.format("%.2f", selectedTotal));
                         return;
                     }
+                    
+                    parkingAmountToSend = cashGiven - fineAmountToPay;
+
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Invalid Cash Amount");
                     return;
@@ -213,7 +167,7 @@ public class PaymentPageUI extends JFrame {
 
             Receipt receipt = exitSystem.confirmExit(
                 pendingExit.getLicensePlate(),
-                pendingExit.getParkingFee(),
+                parkingAmountToSend,
                 fineAmountToPay,
                 method
             );
@@ -239,11 +193,15 @@ public class PaymentPageUI extends JFrame {
                     full.setSelected(true);
                     selectedTotal = parkingFee + totalFines;
                     fineAmountToPay = totalFines;
-                    partialInput.setEnabled(false);
-                    partialInput.setText("");
+                    
+                    if (this.totalFines >= 500.0) {
+                        feeOnly.setEnabled(false);
+                        feeOnly.setText("Pay Ticket Fee Only (Blocked: Fines > RM500)");
+                        feeOnlyAmount.setText("Mandatory Full Payment");
+                    }
 
                 } else {
-                    JOptionPane.showMessageDialog(this, "Payment Failed. Database Error.");
+                    JOptionPane.showMessageDialog(this, "Payment Failed. Database Error or Blocked.");
                 }
             }
         });

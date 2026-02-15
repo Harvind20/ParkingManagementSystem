@@ -146,12 +146,15 @@ public class OutstandingFinesPanel extends JPanel {
                 String plate = rs.getString("plate_num");
                 double amount = rs.getDouble("amount");
                 String reason = rs.getString("reason");
+                String date = rs.getString("date_issued");
+                
+                if (date == null) date = "-";
                 
                 tableModel.addRow(new Object[]{
                         plate,
                         String.format("RM %.2f", amount),
                         reason,
-                        "-" 
+                        date 
                 });
             }
         } catch (Exception e) {

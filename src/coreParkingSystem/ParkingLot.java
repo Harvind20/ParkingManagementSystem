@@ -1,16 +1,14 @@
 package coreParkingSystem;
 
 import EntryModule.Ticket;
-import EntryModule.Vehicle; // Import Vehicle
+import EntryModule.Vehicle;
 import java.util.*;
 
 public class ParkingLot {
     private ArrayList<Floor> floors = new ArrayList<>();
     private TicketDAO ticketDAO = new TicketDAO(); 
     private ParkingSpotDAO spotDAO = new ParkingSpotDAO();
-    private VehicleDAO vehicleDAO = new VehicleDAO(); // --- NEW: Add DAO ---
-    
-    // private ReceiptDAO receiptDAO = new ReceiptDAO(); // Keep commented out for now
+    private VehicleDAO vehicleDAO = new VehicleDAO();
     
     final int floorNumber = 3;
 
@@ -26,14 +24,12 @@ public class ParkingLot {
     public static ParkingLot getInstance(){
         return InstanceHolder.INSTANCE;
     }
-    
-    // --- NEW: Save Vehicle Method ---
+
     public void saveVehicle(Vehicle v) {
         vehicleDAO.create(v);
         System.out.println("[DB] Vehicle saved: " + v.getLicensePlate());
     }
-    
-    // ... (Keep existing methods: getNextSequenceNumber, saveTicket, etc.) ...
+
 
     public int getNextSequenceNumber(String plateNum) {
         return ticketDAO.getTicketCount(plateNum) + 1;

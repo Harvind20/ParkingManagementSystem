@@ -6,8 +6,11 @@ import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.Row;
+import coreParkingSystem.VehicleDAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
@@ -31,6 +34,7 @@ public class EntryController {
 
     public String attemptPark(Vehicle vehicle, String selectedSpotID) {
         ParkingLot lot = ParkingLot.getInstance();
+        VehicleDAO vehicleDAO = new VehicleDAO(); 
 
         ParkingSpot.Status status = lot.getSpotStatus(selectedSpotID);
         ParkingSpot.Type type = lot.getSpotType(selectedSpotID);
@@ -75,10 +79,11 @@ public class EntryController {
             createHandicapViolationFine(vehicle.getLicensePlate());
         }
 
-
         if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
             createReservedFine(vehicle.getLicensePlate());
         }
+        
+        vehicleDAO.syncTotalFines(vehicle.getLicensePlate());
 
         SwingUtilities.invokeLater(() -> 
             new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, vehicle.isVip(), selectedSpotID).setVisible(true)
@@ -95,15 +100,18 @@ public class EntryController {
 
     private void createReservedFine(String plate) {
         try {
-            Connection conn = coreParkingSystem.DatabaseConnection.connect();
+            Connection conn = DatabaseConnection.connect();
 
-            String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement pst = conn.prepareStatement(sql);
+            
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             pst.setString(1, plate);
             pst.setDouble(2, 50.0);
             pst.setString(3, "Non-VIP parked in RESERVED spot");
             pst.setString(4, "UNPAID");
+            pst.setString(5, timestamp);
 
             pst.executeUpdate();
 
@@ -111,6 +119,7 @@ public class EntryController {
             conn.close();
 
             System.out.println("Fine created for " + plate);
+            new VehicleDAO().syncTotalFines(plate);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -118,27 +127,30 @@ public class EntryController {
     }
 
     private void createHandicapViolationFine(String plate) {
-    try {
-        Connection conn = DatabaseConnection.connect();
+        try {
+            Connection conn = DatabaseConnection.connect();
 
-        String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
-        PreparedStatement pst = conn.prepareStatement(sql);
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement pst = conn.prepareStatement(sql);
 
-        pst.setString(1, plate);
-        pst.setDouble(2, 100.0);
-        pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
-        pst.setString(4, "UNPAID");
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-        pst.executeUpdate();
+            pst.setString(1, plate);
+            pst.setDouble(2, 100.0);
+            pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
+            pst.setString(4, "UNPAID");
+            pst.setString(5, timestamp);
 
-        pst.close();
-        conn.close();
+            pst.executeUpdate();
 
-        System.out.println("Handicap violation fine issued.");
+            pst.close();
+            conn.close();
 
-    } catch (Exception e) {
-        e.printStackTrace();
+            System.out.println("Handicap violation fine issued.");
+            new VehicleDAO().syncTotalFines(plate);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    }
-
 }

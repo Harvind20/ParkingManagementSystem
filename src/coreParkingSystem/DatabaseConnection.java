@@ -35,7 +35,8 @@ public class DatabaseConnection {
         String sqlVehicles = "CREATE TABLE IF NOT EXISTS vehicles ("
                 + " plate_num TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
-                + " is_vip BOOLEAN DEFAULT 0"
+                + " is_vip BOOLEAN DEFAULT 0,"
+                + " accumulated_fines REAL DEFAULT 0.0"
                 + ");";
 
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
@@ -52,6 +53,7 @@ public class DatabaseConnection {
                 + " amount REAL NOT NULL,"
                 + " reason TEXT NOT NULL,"
                 + " status TEXT NOT NULL,"
+                + " date_issued TEXT,"
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
