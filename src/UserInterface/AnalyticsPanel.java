@@ -10,7 +10,6 @@ import javax.swing.*;
 
 public class AnalyticsPanel extends JPanel {
 
-    private JComboBox<String> periodDropdown;
     private JLabel totalSpotsLbl;
     private JLabel occupiedLbl;
     private JLabel availableLbl;
@@ -83,20 +82,13 @@ public class AnalyticsPanel extends JPanel {
         revTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         left.add(revTitle);
 
+        JLabel todayNote = new JLabel("Showing today's data only", SwingConstants.CENTER);
+        todayNote.setForeground(ThemeColors.PRIMARY);
+        todayNote.setFont(new Font("Arial", Font.ITALIC, 12));
+        todayNote.setAlignmentX(Component.CENTER_ALIGNMENT);
+        left.add(todayNote);
+
         left.add(Box.createVerticalStrut(12));
-
-        periodDropdown = new JComboBox<>(new String[]{
-                "Today",
-                "Last Week",
-                "Last Month"
-        });
-        periodDropdown.addActionListener(e -> updateAnalytics());
-        periodDropdown.setMaximumSize(new Dimension(180, 32));
-        periodDropdown.setFont(new Font("Arial", Font.PLAIN, 14));
-        periodDropdown.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        left.add(periodDropdown);
-        left.add(Box.createVerticalStrut(18));
 
         parkingFeesLbl = createTextPrimary("Parking Fees:");
         finesLbl = createTextPrimary("Fines Collection:");
@@ -155,7 +147,16 @@ public class AnalyticsPanel extends JPanel {
         group.add(progressive);
         group.add(hourly);
 
-        fixed.setSelected(true);
+        String currentStrategy = new AdminSettingsDAO().getCurrentStrategy();
+        if ("HOURLY".equalsIgnoreCase(currentStrategy)) {
+            hourly.setSelected(true);
+        }
+        else if ("PROGRESSIVE".equalsIgnoreCase(currentStrategy)) {
+            progressive.setSelected(true);
+        }
+        else {
+            fixed.setSelected(true);
+        }
 
         fixed.addActionListener(e ->
             new ConfirmSchemeChangeDialog(
@@ -207,7 +208,7 @@ public class AnalyticsPanel extends JPanel {
     private void styleRadioPrimary(JRadioButton r) {
         r.setForeground(ThemeColors.PRIMARY);
         r.setOpaque(false);
-        r.setFont(new Font("Arial", Font.BOLD, 17)); // slightly bigger
+        r.setFont(new Font("Arial", Font.BOLD, 17));
         r.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
 
@@ -240,18 +241,7 @@ public class AnalyticsPanel extends JPanel {
         int available = totalSpots - occupied;
         double utilization = (totalSpots > 0) ? (occupied * 100.0) / totalSpots : 0;
 
-        String period = (String) periodDropdown.getSelectedItem();
-
-        String dateFilter = "";
-        if(period.equals("Today")) {
-            dateFilter = "WHERE date(exit_time) = date('now')";
-        }
-        else if(period.equals("Last Week")) {
-            dateFilter = "WHERE exit_time >= date('now','-7 days')";
-        }
-        else if(period.equals("Last Month")) {
-            dateFilter = "WHERE exit_time >= date('now','-30 days')";
-        }
+        String dateFilter = "WHERE date(exit_time) = date('now')";
 
         PreparedStatement pst4 =
             conn.prepareStatement(
@@ -268,10 +258,10 @@ public class AnalyticsPanel extends JPanel {
         double fines = rs4.getDouble(2);
         double totalRevenue = rs4.getDouble(3);
 
-        String currentStrategy = new AdminSettingsDAO().getCurrentStrategy();
+        String currentStrategyLabel = new AdminSettingsDAO().getCurrentStrategy();
         String displayStrategy = "Fixed Fine Scheme";
-        if("HOURLY".equalsIgnoreCase(currentStrategy)) displayStrategy = "Hourly Fine Scheme";
-        if("PROGRESSIVE".equalsIgnoreCase(currentStrategy)) displayStrategy = "Progressive Fine Scheme";
+        if("HOURLY".equalsIgnoreCase(currentStrategyLabel)) displayStrategy = "Hourly Fine Scheme";
+        if("PROGRESSIVE".equalsIgnoreCase(currentStrategyLabel)) displayStrategy = "Progressive Fine Scheme";
 
         totalSpotsLbl.setText("Total Spots: " + totalSpots);
         occupiedLbl.setText("Occupied: " + occupied);
