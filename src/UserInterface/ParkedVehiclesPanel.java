@@ -36,29 +36,17 @@ public class ParkedVehiclesPanel extends JPanel {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topPanel.setBackground(ThemeColors.PRIMARY);
 
-        RoundedButton downBtn = new RoundedButton("▼", ThemeColors.SECONDARY);
-        RoundedButton upBtn   = new RoundedButton("▲", ThemeColors.SECONDARY);
-
         dateLabel = new JLabel();
         dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         dateLabel.setForeground(Color.WHITE);
         updateDateLabel();
 
-        downBtn.addActionListener(e -> {
-            currentDate = currentDate.minusDays(1);
-            updateDateLabel();
-            refreshTable();
-        });
+        JLabel todayNote = new JLabel("Showing Today's Parked Vehicles");
+        todayNote.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        todayNote.setForeground(Color.LIGHT_GRAY);
 
-        upBtn.addActionListener(e -> {
-            currentDate = currentDate.plusDays(1);
-            updateDateLabel();
-            refreshTable();
-        });
-
-        topPanel.add(downBtn);
         topPanel.add(dateLabel);
-        topPanel.add(upBtn);
+        topPanel.add(todayNote);
 
         return topPanel;
     }
@@ -143,13 +131,8 @@ public class ParkedVehiclesPanel extends JPanel {
         dateLabel.setText(currentDate.format(formatter));
     }
 
-    private void refreshTable() {
-        tableModel.setRowCount(0);
-        loadDataFromDB();
-    }
-
     private void loadDataFromDB() {
-        String targetDate = currentDate.toString(); 
+        String targetDate = LocalDate.now().toString();
 
         String sqlActive = "SELECT t.plate_num, t.entry_time, s.spot_id, s.type " +
                            "FROM tickets t " +
@@ -174,7 +157,7 @@ public class ParkedVehiclesPanel extends JPanel {
                     rsActive.getString("plate_num"),
                     entry.format(formatter),
                     entry.format(timeFormatter),
-                    "—", 
+                    "—",
                     rsActive.getString("spot_id"),
                     rsActive.getString("type")
                 });
@@ -188,7 +171,7 @@ public class ParkedVehiclesPanel extends JPanel {
                 LocalDateTime entry = LocalDateTime.parse(rsHist.getString("entry_time"));
                 LocalDateTime exit = LocalDateTime.parse(rsHist.getString("exit_time"));
                 String type = rsHist.getString("type");
-                if (type == null) type = "Unknown"; 
+                if (type == null) type = "Unknown";
 
                 tableModel.addRow(new Object[]{
                     rsHist.getString("plate_num"),
