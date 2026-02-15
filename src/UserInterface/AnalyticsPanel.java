@@ -1,5 +1,6 @@
 package UserInterface;
 
+import coreParkingSystem.AdminSettingsDAO;
 import coreParkingSystem.DatabaseConnection;
 import java.awt.*;
 import java.sql.Connection;
@@ -19,7 +20,8 @@ public class AnalyticsPanel extends JPanel {
     private JLabel parkingFeesLbl;
     private JLabel finesLbl;
     private JLabel totalRevenueLbl;
-
+    
+    private JLabel activeSchemeLbl; 
 
     public AnalyticsPanel() {
 
@@ -129,12 +131,12 @@ public class AnalyticsPanel extends JPanel {
 
         right.add(title);
 
-        JLabel active = new JLabel("Active Scheme: Fixed Fine Scheme");
-        active.setForeground(ThemeColors.SECONDARY);
-        active.setFont(new Font("Arial", Font.PLAIN, 14));
-        active.setAlignmentX(Component.LEFT_ALIGNMENT);
+        activeSchemeLbl = new JLabel("Active Scheme: Loading...");
+        activeSchemeLbl.setForeground(ThemeColors.SECONDARY);
+        activeSchemeLbl.setFont(new Font("Arial", Font.PLAIN, 14));
+        activeSchemeLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        right.add(active);
+        right.add(activeSchemeLbl);
         right.add(Box.createVerticalStrut(6));
         right.add(createDivider());
         right.add(Box.createVerticalStrut(14));
@@ -154,7 +156,6 @@ public class AnalyticsPanel extends JPanel {
 
         fixed.setSelected(true);
 
-        // Opens confirmation dialog when clicked
         fixed.addActionListener(e ->
             new ConfirmSchemeChangeDialog(
                 (JFrame) SwingUtilities.getWindowAncestor(this),
@@ -221,30 +222,24 @@ public class AnalyticsPanel extends JPanel {
     try {
         Connection conn = DatabaseConnection.connect();
 
-        // ===== OCCUPANCY SECTION =====
-
-        // Total spots
         PreparedStatement pst1 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots");
         ResultSet rs1 = pst1.executeQuery();
         int totalSpots = rs1.getInt(1);
 
-        // Occupied spots
         PreparedStatement pst2 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE status='OCCUPIED'");
         ResultSet rs2 = pst2.executeQuery();
         int occupied = rs2.getInt(1);
 
-        // Reserved spots
         PreparedStatement pst3 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE type='RESERVED'");
         ResultSet rs3 = pst3.executeQuery();
         int reserved = rs3.getInt(1);
 
         int available = totalSpots - occupied;
-        double utilization = (occupied * 100.0) / totalSpots;
+        double utilization = (totalSpots > 0) ? (occupied * 100.0) / totalSpots : 0;
 
-        // ===== REVENUE FILTER =====
         String period = (String) periodDropdown.getSelectedItem();
 
         String dateFilter = "";
@@ -258,7 +253,6 @@ public class AnalyticsPanel extends JPanel {
             dateFilter = "WHERE exit_time >= date('now','-30 days')";
         }
 
-        // ===== REVENUE QUERY =====
         PreparedStatement pst4 =
             conn.prepareStatement(
                 "SELECT " +
@@ -274,7 +268,11 @@ public class AnalyticsPanel extends JPanel {
         double fines = rs4.getDouble(2);
         double totalRevenue = rs4.getDouble(3);
 
-        // ===== UPDATE LABELS =====
+        String currentStrategy = new AdminSettingsDAO().getCurrentStrategy();
+        String displayStrategy = "Fixed Fine Scheme";
+        if("HOURLY".equalsIgnoreCase(currentStrategy)) displayStrategy = "Hourly Fine Scheme";
+        if("PROGRESSIVE".equalsIgnoreCase(currentStrategy)) displayStrategy = "Progressive Fine Scheme";
+
         totalSpotsLbl.setText("Total Spots: " + totalSpots);
         occupiedLbl.setText("Occupied: " + occupied);
         availableLbl.setText("Available: " + available);
@@ -284,6 +282,8 @@ public class AnalyticsPanel extends JPanel {
         parkingFeesLbl.setText("Parking Fees: RM " + String.format("%.2f", parkingFees));
         finesLbl.setText("Fines Collection: RM " + String.format("%.2f", fines));
         totalRevenueLbl.setText("Total Revenue: RM " + String.format("%.2f", totalRevenue));
+        
+        activeSchemeLbl.setText("Active Scheme: " + displayStrategy);
 
         conn.close();
 
@@ -291,7 +291,4 @@ public class AnalyticsPanel extends JPanel {
         e.printStackTrace();
         }
     }
-
-
-
 }

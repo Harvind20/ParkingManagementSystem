@@ -1,8 +1,10 @@
 package UserInterface;
 
+import FineModule.*;
+import coreParkingSystem.AdminSettingsDAO;
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class ConfirmSchemeChangeDialog extends JDialog {
 
@@ -22,12 +24,10 @@ public class ConfirmSchemeChangeDialog extends JDialog {
 
         add(card);
 
-        // Title
         JLabel title = centerText("Confirm Fine Scheme Change", 16, true);
         card.add(title);
         card.add(Box.createVerticalStrut(12));
 
-        // Description
         card.add(centerText("You are about to change the fine calculation policy.", 13, false));
         card.add(Box.createVerticalStrut(12));
 
@@ -39,7 +39,6 @@ public class ConfirmSchemeChangeDialog extends JDialog {
 
         card.add(Box.createVerticalStrut(25));
 
-        // Buttons row
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 0));
         btnRow.setOpaque(false);
 
@@ -50,8 +49,23 @@ public class ConfirmSchemeChangeDialog extends JDialog {
         cancel.setPreferredSize(new Dimension(140, 45));
 
         confirm.addActionListener(e -> {
-            // update DB here
+            String dbValue = "FIXED";
+            FineScheme strategyObj = new FixedFine();
+
+            if (schemeName.contains("Hourly")) {
+                dbValue = "HOURLY";
+                strategyObj = new HourlyFine();
+            } else if (schemeName.contains("Progressive")) {
+                dbValue = "PROGRESSIVE";
+                strategyObj = new ProgressiveFine();
+            }
+
+            new AdminSettingsDAO().setStrategy(dbValue);
+
+            FineManager.setFineScheme(strategyObj);
+
             dispose();
+            JOptionPane.showMessageDialog(parent, "Fine Strategy Updated Successfully!");
         });
 
         cancel.addActionListener(e -> dispose());

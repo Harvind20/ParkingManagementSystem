@@ -1,12 +1,17 @@
 package UserInterface;
 
+import coreParkingSystem.DatabaseConnection;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import java.awt.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 public class ParkedVehiclesPanel extends JPanel {
 
@@ -15,6 +20,7 @@ public class ParkedVehiclesPanel extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
 
     public ParkedVehiclesPanel() {
         setLayout(new BorderLayout());
@@ -72,7 +78,7 @@ public class ParkedVehiclesPanel extends JPanel {
         table = new JTable(tableModel);
 
         styleTable();
-        loadDummyData();
+        loadDataFromDB();
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -139,33 +145,63 @@ public class ParkedVehiclesPanel extends JPanel {
 
     private void refreshTable() {
         tableModel.setRowCount(0);
-        loadDummyData();
+        loadDataFromDB();
     }
 
-    private void loadDummyData() {
-        LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
+    private void loadDataFromDB() {
+        String targetDate = currentDate.toString(); 
 
-        if (currentDate.equals(today)) {
-            tableModel.addRow(new Object[]{
-                    "ABC1234",
-                    today.format(formatter),
-                    "10:20 AM",
-                    "11:30 AM",
-                    "F1-R1-S1",
-                    "Regular"
-            });
-        }
+        String sqlActive = "SELECT t.plate_num, t.entry_time, s.spot_id, s.type " +
+                           "FROM tickets t " +
+                           "JOIN parking_spots s ON t.plate_num = s.plate_num " +
+                           "WHERE t.status = 'ACTIVE' AND date(t.entry_time) = ?";
 
-        if (currentDate.equals(yesterday)) {
-            tableModel.addRow(new Object[]{
-                    "WXY5678",
-                    yesterday.format(formatter),
-                    "09:05 AM",
-                    "—",
-                    "F2-R3-S2",
-                    "Compact"
-            });
+        String sqlHistory = "SELECT r.plate_num, r.entry_time, r.exit_time, r.spot_id, s.type " +
+                            "FROM receipts r " +
+                            "LEFT JOIN parking_spots s ON r.spot_id = s.spot_id " +
+                            "WHERE date(r.entry_time) = ?";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            
+            PreparedStatement pstActive = conn.prepareStatement(sqlActive);
+            pstActive.setString(1, targetDate);
+            ResultSet rsActive = pstActive.executeQuery();
+
+            while (rsActive.next()) {
+                LocalDateTime entry = LocalDateTime.parse(rsActive.getString("entry_time"));
+                
+                tableModel.addRow(new Object[]{
+                    rsActive.getString("plate_num"),
+                    entry.format(formatter),
+                    entry.format(timeFormatter),
+                    "—", 
+                    rsActive.getString("spot_id"),
+                    rsActive.getString("type")
+                });
+            }
+
+            PreparedStatement pstHist = conn.prepareStatement(sqlHistory);
+            pstHist.setString(1, targetDate);
+            ResultSet rsHist = pstHist.executeQuery();
+
+            while (rsHist.next()) {
+                LocalDateTime entry = LocalDateTime.parse(rsHist.getString("entry_time"));
+                LocalDateTime exit = LocalDateTime.parse(rsHist.getString("exit_time"));
+                String type = rsHist.getString("type");
+                if (type == null) type = "Unknown"; 
+
+                tableModel.addRow(new Object[]{
+                    rsHist.getString("plate_num"),
+                    entry.format(formatter),
+                    entry.format(timeFormatter),
+                    exit.format(timeFormatter),
+                    rsHist.getString("spot_id"),
+                    type
+                });
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

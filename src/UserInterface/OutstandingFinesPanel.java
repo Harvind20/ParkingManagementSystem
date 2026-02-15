@@ -1,10 +1,14 @@
 package UserInterface;
 
+import coreParkingSystem.DatabaseConnection;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import java.awt.*;
 
 public class OutstandingFinesPanel extends JPanel {
 
@@ -68,7 +72,7 @@ public class OutstandingFinesPanel extends JPanel {
         table.setFillsViewportHeight(true);
 
         styleTable();
-        loadMockData();  
+        loadFinesFromDB("");  
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -121,66 +125,42 @@ public class OutstandingFinesPanel extends JPanel {
         });
     }
 
-    private void loadMockData() {
+    private void loadFinesFromDB(String plateQuery) {
         tableModel.setRowCount(0);
+        
+        String sql = "SELECT * FROM fines WHERE status = 'UNPAID'";
+        if (!plateQuery.isEmpty()) {
+            sql += " AND plate_num LIKE ?";
+        }
 
-        tableModel.addRow(new Object[]{
-                "ABC1234",
-                "RM 67",
-                "Overstay",
-                "20-2-2067"
-        });
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            if (!plateQuery.isEmpty()) {
+                pstmt.setString(1, "%" + plateQuery + "%");
+            }
 
-        tableModel.addRow(new Object[]{
-                "WXY5678",
-                "RM 50",
-                "Illegal Parking",
-                "19-2-2067"
-        });
+            ResultSet rs = pstmt.executeQuery();
 
-        tableModel.addRow(new Object[]{
-                "ABC1234",
-                "RM 120",
-                "No Ticket Displayed",
-                "18-2-2067"
-        });
+            while (rs.next()) {
+                String plate = rs.getString("plate_num");
+                double amount = rs.getDouble("amount");
+                String reason = rs.getString("reason");
+                
+                tableModel.addRow(new Object[]{
+                        plate,
+                        String.format("RM %.2f", amount),
+                        reason,
+                        "-" 
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void searchFines() {
-        String plate = plateField.getText().trim().toUpperCase();
-
-        tableModel.setRowCount(0);
-
-        // If empty then show all again
-        if (plate.isEmpty()) {
-            loadMockData();
-            return;
-        }
-
-        // Filter mock data 
-        if ("ABC1234".contains(plate)) {
-            tableModel.addRow(new Object[]{
-                    "ABC1234",
-                    "RM 67",
-                    "Overstay",
-                    "20-2-2067"
-            });
-
-            tableModel.addRow(new Object[]{
-                    "ABC1234",
-                    "RM 120",
-                    "No Ticket Displayed",
-                    "18-2-2067"
-            });
-        }
-
-        if ("WXY5678".contains(plate)) {
-            tableModel.addRow(new Object[]{
-                    "WXY5678",
-                    "RM 50",
-                    "Illegal Parking",
-                    "19-2-2067"
-            });
-        }
+        String plate = plateField.getText().trim();
+        loadFinesFromDB(plate);
     }
 }
