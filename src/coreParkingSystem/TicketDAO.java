@@ -75,5 +75,4 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
     @Override public void update(Ticket ticket) {}
     @Override public void delete(String id) {} 
     @Override public List<Ticket> getAll() { return new ArrayList<>(); }
-    public Ticket findByPlate(String plate) { return findActiveByPlate(plate); }
 }
