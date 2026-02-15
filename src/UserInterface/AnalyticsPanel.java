@@ -28,8 +28,9 @@ public class AnalyticsPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(ThemeColors.PRIMARY);
 
-        JPanel content = new JPanel(new GridLayout(1, 2));
+        JPanel content = new JPanel(new GridLayout(1, 2, 20, 0));
         content.setBackground(ThemeColors.PRIMARY);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         content.add(createLeftSection());
         content.add(createRightSection());
@@ -37,47 +38,49 @@ public class AnalyticsPanel extends JPanel {
         add(content, BorderLayout.CENTER);
         updateAnalytics();
         new javax.swing.Timer(10000, e -> updateAnalytics()).start();
-
     }
 
     private JPanel createLeftSection() {
 
-        JPanel left = new JPanel();
-        left.setBackground(ThemeColors.PRIMARY);
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
-        left.setBorder(BorderFactory.createEmptyBorder(30, 60, 30, 30));
+        RoundedPanel card = new RoundedPanel(30);
+        card.setBackground(ThemeColors.SECONDARY);
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
-        JLabel title = new JLabel("Occupancy Status");
-        title.setForeground(ThemeColors.SECONDARY);
+        JPanel left = new JPanel();
+        left.setBackground(ThemeColors.SECONDARY);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Occupancy Status", SwingConstants.CENTER);
+        title.setForeground(ThemeColors.PRIMARY);
         title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         left.add(title);
         left.add(Box.createVerticalStrut(12));
 
-        totalSpotsLbl = createText("Total Spots:");
-        occupiedLbl = createText("Occupied:");
-        availableLbl = createText("Available:");
-        reservedLbl = createText("Reserved:");
+        totalSpotsLbl = createTextPrimary("Total Spots:");
+        occupiedLbl = createTextPrimary("Occupied:");
+        availableLbl = createTextPrimary("Available:");
+        reservedLbl = createTextPrimary("Reserved:");
 
         left.add(totalSpotsLbl);
         left.add(occupiedLbl);
         left.add(availableLbl);
         left.add(reservedLbl);
 
-
         left.add(Box.createVerticalStrut(12));
-        left.add(createDivider());
+        left.add(createDividerPrimary());
         left.add(Box.createVerticalStrut(12));
 
-        utilizationLbl = createText("Current Utilization:");
+        utilizationLbl = createTextPrimary("Current Utilization:");
         left.add(utilizationLbl);
         left.add(Box.createVerticalStrut(30));
 
-        JLabel revTitle = new JLabel("Revenue Summary");
-        revTitle.setForeground(ThemeColors.SECONDARY);
+        JLabel revTitle = new JLabel("Revenue Summary", SwingConstants.CENTER);
+        revTitle.setForeground(ThemeColors.PRIMARY);
         revTitle.setFont(new Font("Arial", Font.BOLD, 17));
-        revTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        revTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         left.add(revTitle);
 
         left.add(Box.createVerticalStrut(12));
@@ -90,64 +93,62 @@ public class AnalyticsPanel extends JPanel {
         periodDropdown.addActionListener(e -> updateAnalytics());
         periodDropdown.setMaximumSize(new Dimension(180, 32));
         periodDropdown.setFont(new Font("Arial", Font.PLAIN, 14));
-        periodDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
+        periodDropdown.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         left.add(periodDropdown);
         left.add(Box.createVerticalStrut(18));
 
-        parkingFeesLbl = createText("Parking Fees:");
-        finesLbl = createText("Fines Collection:");
+        parkingFeesLbl = createTextPrimary("Parking Fees:");
+        finesLbl = createTextPrimary("Fines Collection:");
         left.add(parkingFeesLbl);
         left.add(finesLbl);
+
         left.add(Box.createVerticalStrut(12));
-        left.add(createDivider());
+        left.add(createDividerPrimary());
         left.add(Box.createVerticalStrut(12));
 
-        totalRevenueLbl = createText("Total Revenue:");
+        totalRevenueLbl = createTextPrimary("Total Revenue:");
         left.add(totalRevenueLbl);
 
-        return left;
+        card.add(left, BorderLayout.CENTER);
+        return card;
     }
 
     private JPanel createRightSection() {
 
-        JPanel rightWrapper = new JPanel(new BorderLayout());
-        rightWrapper.setBackground(ThemeColors.PRIMARY);
-
-        JPanel divider = new JPanel();
-        divider.setBackground(ThemeColors.SECONDARY);
-        divider.setPreferredSize(new Dimension(2, 0));
-        rightWrapper.add(divider, BorderLayout.WEST);
+        RoundedPanel card = new RoundedPanel(30);
+        card.setBackground(ThemeColors.SECONDARY);
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
         JPanel right = new JPanel();
-        right.setBackground(ThemeColors.PRIMARY);
+        right.setBackground(ThemeColors.SECONDARY);
         right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
-        right.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 60));
 
-        JLabel title = new JLabel("Fine Calculation Scheme");
-        title.setForeground(ThemeColors.SECONDARY);
+        JLabel title = new JLabel("Fine Calculation Scheme", SwingConstants.CENTER);
+        title.setForeground(ThemeColors.PRIMARY);
         title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         right.add(title);
 
-        activeSchemeLbl = new JLabel("Active Scheme: Loading...");
-        activeSchemeLbl.setForeground(ThemeColors.SECONDARY);
+        activeSchemeLbl = new JLabel("Active Scheme: Loading...", SwingConstants.CENTER);
+        activeSchemeLbl.setForeground(ThemeColors.PRIMARY);
         activeSchemeLbl.setFont(new Font("Arial", Font.PLAIN, 14));
-        activeSchemeLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        activeSchemeLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         right.add(activeSchemeLbl);
         right.add(Box.createVerticalStrut(6));
-        right.add(createDivider());
+        right.add(createDividerPrimary());
         right.add(Box.createVerticalStrut(14));
 
         JRadioButton fixed = new JRadioButton("Fixed Fine Scheme");
         JRadioButton progressive = new JRadioButton("Progressive Fine Scheme");
         JRadioButton hourly = new JRadioButton("Hourly Fine Scheme");
 
-        styleRadio(fixed);
-        styleRadio(progressive);
-        styleRadio(hourly);
+        styleRadioPrimary(fixed);
+        styleRadioPrimary(progressive);
+        styleRadioPrimary(hourly);
 
         ButtonGroup group = new ButtonGroup();
         group.add(fixed);
@@ -178,42 +179,41 @@ public class AnalyticsPanel extends JPanel {
         );
 
         right.add(fixed);
-        right.add(createText("Flat RM 50 fine for overstaying"));
+        right.add(createTextPrimary("Flat RM 50 fine for overstaying"));
         right.add(Box.createVerticalStrut(14));
 
         right.add(progressive);
-        right.add(createText("First 24 hours: RM 50"));
-        right.add(createText("24–48 hours: +RM 100"));
-        right.add(createText("48–72 hours: +RM 150"));
-        right.add(createText("Above 72 hours: +RM 200"));
+        right.add(createTextPrimary("First 24 hours: RM 50"));
+        right.add(createTextPrimary("24–48 hours: +RM 100"));
+        right.add(createTextPrimary("48–72 hours: +RM 150"));
+        right.add(createTextPrimary("Above 72 hours: +RM 200"));
         right.add(Box.createVerticalStrut(14));
 
         right.add(hourly);
-        right.add(createText("RM 20 per hour for each extra hour"));
+        right.add(createTextPrimary("RM 20 per hour for each extra hour"));
 
-        rightWrapper.add(right, BorderLayout.CENTER);
-
-        return rightWrapper;
+        card.add(right, BorderLayout.CENTER);
+        return card;
     }
 
-    private JLabel createText(String text) {
-        JLabel l = new JLabel(text);
-        l.setForeground(ThemeColors.SECONDARY);
+    private JLabel createTextPrimary(String text) {
+        JLabel l = new JLabel(text, SwingConstants.CENTER);
+        l.setForeground(ThemeColors.PRIMARY);
         l.setFont(new Font("Arial", Font.PLAIN, 15));
-        l.setAlignmentX(Component.LEFT_ALIGNMENT);
+        l.setAlignmentX(Component.CENTER_ALIGNMENT);
         return l;
     }
 
-    private void styleRadio(JRadioButton r) {
-        r.setForeground(ThemeColors.SECONDARY);
+    private void styleRadioPrimary(JRadioButton r) {
+        r.setForeground(ThemeColors.PRIMARY);
         r.setOpaque(false);
-        r.setFont(new Font("Arial", Font.BOLD, 15));
-        r.setAlignmentX(Component.LEFT_ALIGNMENT);
+        r.setFont(new Font("Arial", Font.BOLD, 17)); // slightly bigger
+        r.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
 
-    private JSeparator createDivider() {
+    private JSeparator createDividerPrimary() {
         JSeparator sep = new JSeparator();
-        sep.setForeground(ThemeColors.SECONDARY);
+        sep.setForeground(ThemeColors.PRIMARY);
         sep.setMaximumSize(new Dimension(420, 1));
         return sep;
     }

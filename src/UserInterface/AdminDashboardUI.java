@@ -21,7 +21,7 @@ public class AdminDashboardUI extends JFrame {
 
         tabs.addTab("Lot Status", new LotStatusPanel());
         tabs.addTab("Analytics", new AnalyticsPanel());
-        tabs.addTab("Analytics", new ParkedVehiclesPanel());
+        tabs.addTab("Parked Vehicles", new ParkedVehiclesPanel());
         tabs.addTab("Outstanding Fines", new OutstandingFinesPanel());
 
         background.add(tabs);
