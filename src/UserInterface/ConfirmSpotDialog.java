@@ -1,6 +1,9 @@
 package UserInterface;
-import javax.swing.*;
+
+import EntryModule.EntryController;
+import EntryModule.Vehicle;
 import java.awt.*;
+import javax.swing.*;
 
 public class ConfirmSpotDialog extends JDialog {
 
@@ -19,7 +22,7 @@ public class ConfirmSpotDialog extends JDialog {
         card.setBackground(ThemeColors.SECONDARY);
         card.setPreferredSize(new Dimension(240,310));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(BorderFactory.createEmptyBorder(15,25,15,25)); // padding only
+        card.setBorder(BorderFactory.createEmptyBorder(15,25,15,25));
 
         JLabel t1 = createLabel("You");
         JLabel t2 = createLabel("are about to");
@@ -47,8 +50,32 @@ public class ConfirmSpotDialog extends JDialog {
         cancel.addActionListener(e -> dispose());
 
         confirm.addActionListener(e -> {
-            dispose();
-            new ParkingTicketUI().setVisible(true);
+            Vehicle vehicle = null;
+            if (parent instanceof SpotSelectionUI) {
+                vehicle = ((SpotSelectionUI) parent).currentVehicle;
+            }
+
+            if (vehicle == null) {
+                JOptionPane.showMessageDialog(this, "Error: Vehicle data missing.");
+                return;
+            }
+
+            String backendSpotId = spotId.replace("Floor ", "")
+                                         .replace(" Row ", "-")
+                                         .replace(" Spot ", "-");
+
+            EntryController controller = new EntryController();
+            String result = controller.attemptPark(vehicle, backendSpotId);
+
+            if (result.startsWith("SUCCESS")) {
+                dispose();
+                parent.dispose();
+                new MainMenuUI().setVisible(true);
+                
+            } else {
+                JOptionPane.showMessageDialog(this, result, "Parking Failed", JOptionPane.ERROR_MESSAGE);
+                dispose();
+            }
         });
 
         card.add(Box.createVerticalStrut(30));

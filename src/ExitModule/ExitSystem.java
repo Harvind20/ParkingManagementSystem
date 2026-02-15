@@ -6,6 +6,7 @@ import FineModule.FineScheme;
 import coreParkingSystem.FineDAO;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
+import coreParkingSystem.ParkingSpotDAO;
 import coreParkingSystem.ReceiptDAO;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -18,8 +19,8 @@ public class ExitSystem {
     private FineDAO fineDAO;
     private ReceiptDAO receiptDAO;
     
-    private Map<String, ExitRecord> exitRecords;
-    private Map<String, PendingExit> pendingExits;
+    private static Map<String, ExitRecord> exitRecords = new HashMap<>();
+    private static Map<String, PendingExit> pendingExits = new HashMap<>();
     
     private LocalDateTime testTime = null;
     
@@ -28,9 +29,6 @@ public class ExitSystem {
         this.fineManager = new FineManager();
         this.fineDAO = new FineDAO();
         this.receiptDAO = new ReceiptDAO();
-        
-        this.exitRecords = new HashMap<>();
-        this.pendingExits = new HashMap<>();
     }
     
     public void setTestTime(LocalDateTime time) {
@@ -52,19 +50,21 @@ public class ExitSystem {
         System.out.println("\n=== Initiating Exit for Vehicle: " + licensePlate + " ===\n");
         
         Ticket ticket = ParkingLot.getInstance().getTicketByPlate(licensePlate);
+        ParkingSpotDAO spotDAO = new ParkingSpotDAO();
+        ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         
         if (ticket == null) {
             System.out.println("ERROR: No active ticket found for license plate: " + licensePlate);
             return null;
         }
         
-        String spotId = parseSpotId(ticket.getSpotId());
+        String spotId = parseSpotId(spot.getSpotID());
         
         LocalDateTime entryTime = ticket.getEntryTime();
         LocalDateTime initiationTime = getCurrentTime();
         
         double parkingFee = feeCalculator.calculateParkingFee(
-            entryTime, initiationTime, ticket.getSpotType(), ticket.getVehicleType()
+            entryTime, initiationTime, spot.getSpotType().name(), ticket.getVehicleType()
         );
         
         double currentFines = calculateFines(ticket, initiationTime);
@@ -100,10 +100,12 @@ public class ExitSystem {
         if (Duration.between(initiationTime, confirmationTime).toSeconds() < 1) return false;
         
         Ticket ticket = pending.getTicket();
+        ParkingSpotDAO spotDAO = new ParkingSpotDAO();
+        ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         
         double currentParkingFee = feeCalculator.calculateParkingFee(
             pending.getEntryTime(), confirmationTime, 
-            ticket.getSpotType(), ticket.getVehicleType()
+            spot.getSpotType().name(), ticket.getVehicleType()
         );
         
         double currentFines = calculateFines(ticket, confirmationTime);
@@ -111,7 +113,7 @@ public class ExitSystem {
         double currentTotalDue = currentParkingFee + currentFines + unpaidFines;
         
         boolean hasChanged = false;
-        
+
         if (Math.abs(currentParkingFee - pending.getParkingFee()) > 0.01 || currentFines > pending.getCurrentFines()) {
             System.out.println("\nFEES UPDATED due to time elapsed.");
             hasChanged = true;
@@ -133,7 +135,8 @@ public class ExitSystem {
                               double finePayment, String paymentMethod) {
         
         System.out.println("\n=== Confirming Exit for Vehicle: " + licensePlate + " ===\n");
-        
+        ParkingSpotDAO spotDAO = new ParkingSpotDAO();
+        ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         PendingExit pending = pendingExits.get(licensePlate);
         if (pending == null) {
             System.out.println("ERROR: No pending exit found. Please initiate exit first.");
@@ -142,7 +145,7 @@ public class ExitSystem {
         
         if (checkForUpdates(licensePlate)) {
             System.out.println("\nExit CONFIRMATION BLOCKED - Fees have changed. Review and confirm again.");
-            return null;
+            return null; // Signals UI to refresh
         }
         
         LocalDateTime confirmationTime = getCurrentTime();
@@ -195,7 +198,6 @@ public class ExitSystem {
         }
 
         ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
-        ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
         ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
         
@@ -206,7 +208,7 @@ public class ExitSystem {
             ticket.getEntryTime(),
             confirmationTime,
             spotId,
-            ticket.getSpotType(),
+            spot.getSpotType().name(),
             ticket.getVehicleType(),
             calculateHoursParked(ticket.getEntryTime(), confirmationTime),
             parkingFee,
@@ -286,11 +288,11 @@ public class ExitSystem {
         private LocalDateTime twentyFourHourThreshold;
         
         public PendingExit(String licensePlate, Ticket ticket, String spotId,
-                          LocalDateTime entryTime, LocalDateTime initiatedTime,
-                          LocalDateTime lastCheckedTime, double parkingFee, 
-                          double currentFines, double unpaidFines, double totalFines,
-                          double totalDue, LocalDateTime nextHourThreshold, 
-                          LocalDateTime twentyFourHourThreshold) {
+                           LocalDateTime entryTime, LocalDateTime initiatedTime,
+                           LocalDateTime lastCheckedTime, double parkingFee, 
+                           double currentFines, double unpaidFines, double totalFines,
+                           double totalDue, LocalDateTime nextHourThreshold, 
+                           LocalDateTime twentyFourHourThreshold) {
             this.licensePlate = licensePlate;
             this.ticket = ticket;
             this.spotId = spotId;

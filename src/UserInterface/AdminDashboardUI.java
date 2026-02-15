@@ -22,21 +22,9 @@ public class AdminDashboardUI extends JFrame {
         tabs.addTab("Lot Status", new LotStatusPanel());
         tabs.addTab("Analytics", new AnalyticsPanel());
         tabs.addTab("Analytics", new ParkedVehiclesPanel());
-        tabs.addTab("Outstanding Fines", createPlaceholder("Outstanding Fines Page"));
+        tabs.addTab("Outstanding Fines", new OutstandingFinesPanel());
 
         background.add(tabs);
-    }
-
-    private JPanel createPlaceholder(String text){
-        JPanel p = new JPanel(new GridBagLayout());
-        p.setBackground(ThemeColors.PRIMARY);
-
-        JLabel label = new JLabel(text);
-        label.setForeground(ThemeColors.SECONDARY);
-        label.setFont(new Font("Arial", Font.BOLD, 18));
-
-        p.add(label);
-        return p;
     }
 
     public static void main(String[] args){

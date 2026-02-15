@@ -5,6 +5,7 @@ public class ParkingSpot {
     private Type spotType;
     private Status spotStatus = Status.AVAILABLE;
     private int spotNumber;
+    private String currentlyParkedVehicleID = null;
     public enum Type{COMPACT,REGULAR,HANDICAPPED,RESERVED}
     public enum Status{AVAILABLE,OCCUPIED}
 
@@ -20,4 +21,6 @@ public class ParkingSpot {
     public void setSpotStatus(Status status){spotStatus = status;}
     public int getSpotNumber(){return spotNumber;}
     public void setSpotNumber(int num){spotNumber = num;}
+    public String getCurrentlyParkedVehicleID(){return currentlyParkedVehicleID;}
+    public void setCurrentlyParkedVehicleID(String id){currentlyParkedVehicleID = id;}
 }

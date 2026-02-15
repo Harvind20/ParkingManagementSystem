@@ -25,7 +25,17 @@ public class LotStatusPanel extends JPanel {
         setLayout(null);
         setBackground(ThemeColors.PRIMARY);
 
-        // Floor dropdown option
+        // Return button
+        RoundedButton returnBtn = new RoundedButton("Return", ThemeColors.SECONDARY);
+        returnBtn.setForeground(ThemeColors.PRIMARY);
+        returnBtn.setBounds(30, 20, 120, 40);
+        add(returnBtn);
+
+        returnBtn.addActionListener(e -> {
+            new MainMenuUI().setVisible(true);
+            SwingUtilities.getWindowAncestor(this).dispose();
+        });
+
         floorDropdown = new JComboBox<>(new String[]{
                 "1st Floor",
                 "2nd Floor",
@@ -84,7 +94,7 @@ public class LotStatusPanel extends JPanel {
                 topBlock.setBounds(topX, topY, blockW, blockH);
                 bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
 
-                floorWrapper.setBounds(30, 20, 200, 40);
+                floorWrapper.setBounds(panelW/2 - 100, 20, 200, 40);
 
                 int ly = panelH/2 - 60;
                 legendOccupied.setBounds(40, ly, 180, 20);

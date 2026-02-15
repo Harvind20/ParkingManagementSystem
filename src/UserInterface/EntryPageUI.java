@@ -1,7 +1,11 @@
 package UserInterface;
+
+import EntryModule.*;
+import coreParkingSystem.ParkingLot;
+
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 public class EntryPageUI extends JFrame {
 
@@ -11,20 +15,36 @@ public class EntryPageUI extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Theme Colors
         Color DARK = new Color(0x02,0x34,0x3F);
         Color CREAM = new Color(0xF0,0xED,0xCC);
 
-        JPanel background = new JPanel();
+        JPanel background = new JPanel(new BorderLayout());
         background.setBackground(DARK);
-        background.setLayout(new GridBagLayout());
+
+        // Return button to go back to main menu
+        JButton returnBtn = new RoundedButton("Return", CREAM);
+        returnBtn.setForeground(DARK);
+        returnBtn.setPreferredSize(new Dimension(100, 35));
+
+        returnBtn.addActionListener(e -> {
+            new MainMenuUI().setVisible(true);
+            dispose();
+        });
+
+        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        topBar.setBackground(DARK);
+        topBar.add(returnBtn);
+
+        background.add(topBar, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setOpaque(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 0, 10, 0);
 
-        // Title Box 
         RoundedPanel titleBox = new RoundedPanel(25);
         titleBox.setBackground(CREAM);
         titleBox.setPreferredSize(new Dimension(320, 70));
@@ -35,124 +55,136 @@ public class EntryPageUI extends JFrame {
         title.setForeground(DARK);
 
         JLabel subtitle = new JLabel("Enter Vehicle Details", SwingConstants.CENTER);
+        subtitle.setFont(new Font("Arial", Font.PLAIN, 12));
         subtitle.setForeground(DARK);
 
         titleBox.add(title);
         titleBox.add(subtitle);
 
         gbc.gridy = 0;
-        background.add(titleBox, gbc);
+        centerPanel.add(titleBox, gbc);
 
-        // Number Plate Label
-        JLabel plateLabel = new JLabel("Number Plate");
-        plateLabel.setForeground(CREAM);
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 15));
+        formPanel.setOpaque(false);
+        formPanel.setBorder(new EmptyBorder(20, 40, 20, 40));
+
+        JLabel l1 = new JLabel("License Plate:");
+        l1.setForeground(CREAM);
+        l1.setFont(new Font("Arial", Font.BOLD, 14));
+        
+        RoundedTextField plateField = new RoundedTextField(15);
+        plateField.setText("PLT" + (int)(Math.random()*1000));
+
+        JLabel l2 = new JLabel("Vehicle Type:");
+        l2.setForeground(CREAM);
+        l2.setFont(new Font("Arial", Font.BOLD, 14));
+        
+        String[] types = {"Car", "SUV", "Motorcycle", "HandicappedVehicle"};
+        JComboBox<String> typeBox = new JComboBox<>(types);
+
+        JCheckBox vipCheck = new JCheckBox("VIP Member");
+        vipCheck.setOpaque(false);
+        vipCheck.setForeground(CREAM);
+
+        JCheckBox handicapCheck = new JCheckBox("Handicapped Driver");
+        handicapCheck.setOpaque(false);
+        handicapCheck.setForeground(CREAM);
+
+        formPanel.add(l1); formPanel.add(plateField);
+        formPanel.add(l2); formPanel.add(typeBox);
+        formPanel.add(vipCheck); formPanel.add(handicapCheck);
+
         gbc.gridy = 1;
-        background.add(plateLabel, gbc);
+        centerPanel.add(formPanel, gbc);
 
-        RoundedTextField plateField = new RoundedTextField(20);
-        plateField.setPreferredSize(new Dimension(320, 40));
-        plateField.setBackground(CREAM);
-        plateField.setForeground(DARK);
-        plateField.setText("ABC1234");
-        gbc.gridy = 2;
-        background.add(plateField, gbc);
+        RoundedButton nextBtn = new RoundedButton("Park", CREAM); 
+        nextBtn.setForeground(DARK);
+        nextBtn.setPreferredSize(new Dimension(120, 40));
 
-        // Vehicle Type Label
-        JLabel vehicleLabel = new JLabel("Vehicle Type");
-        vehicleLabel.setForeground(CREAM);
-        gbc.gridy = 3;
-        background.add(vehicleLabel, gbc);
+        nextBtn.addActionListener(e -> {
+            String plate = plateField.getText().trim();
+            String vType = (String) typeBox.getSelectedItem();
+            boolean isVip = vipCheck.isSelected();
+            boolean isHandicap = handicapCheck.isSelected();
+            int specialCharacterCount = 0;
+            int numOfDigits = 0;
 
-        // Dropdown
-        String[] vehicles = {"Car", "SUV/Truck", "Motorcycle"};
-        JComboBox<String> vehicleDropdown = new JComboBox<>(vehicles);
-        vehicleDropdown.setPreferredSize(new Dimension(320, 40));
-        vehicleDropdown.setBackground(CREAM);
-        vehicleDropdown.setForeground(DARK);
-        vehicleDropdown.setBorder(new RoundedBorder(20));
-        gbc.gridy = 4;
-        background.add(vehicleDropdown, gbc);
+            plate = plate.toUpperCase();
+            if(plate.isEmpty()){
+                JOptionPane.showMessageDialog(this, "Please enter a License Plate.");
+                return;
+            }
+            for (int i = 0; i < plate.length();i++){
+                if (!(Character.isLetterOrDigit(plate.charAt(i)))){
+                    specialCharacterCount += 1;
+                }
+                else if((Character.isDigit(plate.charAt(i)))){
+                    numOfDigits += 1;
+                }
+            }
+            if (specialCharacterCount > 0){
+                JOptionPane.showMessageDialog(this, "No special characters allowed in license plate.");
+                return;
+            }
+            else if (numOfDigits <= 0){
+                JOptionPane.showMessageDialog(this, "License plate requires at least one number.");
+                return;
+            }
 
-        // Checkboxes
-        JCheckBox vipBox = new JCheckBox("VIP Customer");
-        vipBox.setForeground(CREAM);
-        vipBox.setBackground(DARK);
+            Vehicle vehicle;
+            switch (vType) {
+                case "SUV": 
+                    vehicle = new SUV(plate); 
+                    break;
+                case "Motorcycle": 
+                    vehicle = new Motorcycle(plate); 
+                    break;
+                case "HandicappedVehicle": 
+                    vehicle = new HandicappedVehicle(plate); 
+                    break;
+                default: 
+                    vehicle = new Car(plate);
+            }
 
-        JCheckBox handicapBox = new JCheckBox("Handicapped Card Holder");
-        handicapBox.setForeground(CREAM);
-        handicapBox.setBackground(DARK);
+            Ticket ticket = new Ticket.TicketBuilder()
+                .addPlate(vehicle.getLicensePlate())
+                .addTime(vehicle.getEntryTime())
+                .addVehicleType(vehicle.getVehicleType())
+                .addSequenceNumber(ParkingLot.getInstance().getNextSequenceNumber(vehicle.getLicensePlate()))
+                .build();
+            vehicle.setTicketId(ticket.toString());
+            ParkingLot.getInstance().saveVehicle(vehicle);
+            ParkingLot.getInstance().saveTicket(ticket);
+            new ParkingTicketUI("SUCCESS: "+ticket.toString(),vehicle.getLicensePlate());
 
-        gbc.gridy = 5;
-        background.add(vipBox, gbc);
-
-        gbc.gridy = 6;
-        background.add(handicapBox, gbc);
-
-        // Park Button 
-        JButton parkBtn = new RoundedButton("Park →", CREAM);
-        parkBtn.setForeground(DARK);
-        parkBtn.setPreferredSize(new Dimension(160, 45));
-
-        gbc.gridy = 7;
-        gbc.insets = new Insets(30, 0, 0, 0);
-        background.add(parkBtn, gbc);
-
-        parkBtn.addActionListener(e -> {
-
-            String plate = plateField.getText();
-            String vehicle = (String) vehicleDropdown.getSelectedItem();
-            boolean vip = vipBox.isSelected();
-            boolean handicap = handicapBox.isSelected();
-
-            // Open Spot Selection screen
-            SpotSelectionUI spotUI = new SpotSelectionUI();
-
-            // Pass VIP / Handicap settings to SpotSelection
-            spotUI.vipEnabled = vip;
-            spotUI.handicapEnabled = handicap;
+            SpotSelectionUI spotUI = new SpotSelectionUI(vehicle); 
+            spotUI.vipEnabled = isVip; 
+            spotUI.handicapEnabled = isHandicap || (vehicle instanceof HandicappedVehicle);
 
             spotUI.setVisible(true);
-
-            dispose();
+            dispose(); 
         });
 
+        gbc.gridy = 2;
+        centerPanel.add(nextBtn, gbc);
+
+        background.add(centerPanel, BorderLayout.CENTER);
         add(background);
     }
 
     class RoundedTextField extends JTextField {
         private int radius;
-
         RoundedTextField(int radius) {
             this.radius = radius;
             setOpaque(false);
-            setBorder(new EmptyBorder(10, 10, 10, 10));
+            setBorder(new EmptyBorder(5, 10, 5, 10));
         }
-
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
-            g2.setColor(new Color(0xF0,0xED,0xCC)); // cream
+            g2.setColor(new Color(0xF0,0xED,0xCC));
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
             super.paintComponent(g2);
             g2.dispose();
         }
-    }
-
-    class RoundedBorder extends javax.swing.border.AbstractBorder {
-        private int radius;
-
-        RoundedBorder(int radius) {
-            this.radius = radius;
-        }
-
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            g.setColor(new Color(0x02,0x34,0x3F));
-            g.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new EntryPageUI().setVisible(true);
-        });
     }
 }

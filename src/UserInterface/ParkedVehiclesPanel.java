@@ -78,14 +78,13 @@ public class ParkedVehiclesPanel extends JPanel {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(Color.WHITE);
 
-        // Put table inside a rounded "card"
         RoundedPanel card = new RoundedPanel(30);
         card.setBackground(Color.WHITE);
         card.setLayout(new BorderLayout());
         card.setPreferredSize(new Dimension(1000, 420));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         card.add(scrollPane, BorderLayout.CENTER);
 
-        // Center the card
         JPanel wrapper = new JPanel(new GridBagLayout());
         wrapper.setBackground(ThemeColors.PRIMARY);
         wrapper.add(card);
@@ -101,7 +100,6 @@ public class ParkedVehiclesPanel extends JPanel {
         table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(210, 235, 255));
 
-        // Center all text
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(JLabel.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
@@ -114,7 +112,6 @@ public class ParkedVehiclesPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setPreferredSize(new Dimension(header.getWidth(), 40));
 
-        // Alternating row colors
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                            boolean isSelected, boolean hasFocus,
@@ -142,29 +139,33 @@ public class ParkedVehiclesPanel extends JPanel {
 
     private void refreshTable() {
         tableModel.setRowCount(0);
-
-        // For future DB query
         loadDummyData();
     }
 
     private void loadDummyData() {
-        // Temporary data 
-        tableModel.addRow(new Object[]{
-                "ABC1234",
-                currentDate.format(formatter),
-                "10:20 AM",
-                "11:30 AM",
-                "F1-R1-S1",
-                "Regular"
-        });
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
 
-        tableModel.addRow(new Object[]{
-                "WXY5678",
-                currentDate.format(formatter),
-                "09:05 AM",
-                "—",
-                "F2-R3-S2",
-                "Compact"
-        });
+        if (currentDate.equals(today)) {
+            tableModel.addRow(new Object[]{
+                    "ABC1234",
+                    today.format(formatter),
+                    "10:20 AM",
+                    "11:30 AM",
+                    "F1-R1-S1",
+                    "Regular"
+            });
+        }
+
+        if (currentDate.equals(yesterday)) {
+            tableModel.addRow(new Object[]{
+                    "WXY5678",
+                    yesterday.format(formatter),
+                    "09:05 AM",
+                    "—",
+                    "F2-R3-S2",
+                    "Compact"
+            });
+        }
     }
 }

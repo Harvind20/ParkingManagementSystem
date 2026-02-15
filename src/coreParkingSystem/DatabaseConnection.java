@@ -24,32 +24,28 @@ public class DatabaseConnection {
     }
 
     public static void initializeDB() {
-        // 1. PARKING SPOTS
         String sqlSpots = "CREATE TABLE IF NOT EXISTS parking_spots ("
                 + " spot_id TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
-                + " status TEXT NOT NULL"
+                + " status TEXT NOT NULL,"
+                + " plate_num TEXT,"
+                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
-        // 2. VEHICLES
         String sqlVehicles = "CREATE TABLE IF NOT EXISTS vehicles ("
                 + " plate_num TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
                 + " is_vip BOOLEAN DEFAULT 0"
                 + ");";
 
-        // 3. TICKETS
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
                 + " ticket_id TEXT PRIMARY KEY,"
                 + " plate_num TEXT NOT NULL,"
-                + " spot_id TEXT NOT NULL,"
                 + " entry_time TEXT NOT NULL,"
                 + " status TEXT DEFAULT 'ACTIVE'," 
-                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num),"
-                + " FOREIGN KEY (spot_id) REFERENCES parking_spots(spot_id)"
+                + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
-        // 4. FINES
         String sqlFines = "CREATE TABLE IF NOT EXISTS fines ("
                 + " fine_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + " plate_num TEXT NOT NULL,"
@@ -59,7 +55,6 @@ public class DatabaseConnection {
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
-        // 5. RECEIPTS
         String sqlReceipts = "CREATE TABLE IF NOT EXISTS receipts ("
                 + " receipt_id TEXT PRIMARY KEY,"
                 + " ticket_id TEXT NOT NULL,"
@@ -74,7 +69,6 @@ public class DatabaseConnection {
                 + " payment_method TEXT NOT NULL"
                 + ");";
 
-        // 6. ADMIN SETTINGS
         String sqlAdmin = "CREATE TABLE IF NOT EXISTS admin_settings ("
                 + " setting_key TEXT PRIMARY KEY,"
                 + " setting_value TEXT NOT NULL"
