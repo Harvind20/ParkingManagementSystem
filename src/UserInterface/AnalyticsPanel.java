@@ -1,9 +1,25 @@
 package UserInterface;
 
-import javax.swing.*;
+import coreParkingSystem.DatabaseConnection;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.*;
 
 public class AnalyticsPanel extends JPanel {
+
+    private JComboBox<String> periodDropdown;
+    private JLabel totalSpotsLbl;
+    private JLabel occupiedLbl;
+    private JLabel availableLbl;
+    private JLabel reservedLbl;
+    private JLabel utilizationLbl;
+
+    private JLabel parkingFeesLbl;
+    private JLabel finesLbl;
+    private JLabel totalRevenueLbl;
+
 
     public AnalyticsPanel() {
 
@@ -17,6 +33,9 @@ public class AnalyticsPanel extends JPanel {
         content.add(createRightSection());
 
         add(content, BorderLayout.CENTER);
+        updateAnalytics();
+        new javax.swing.Timer(10000, e -> updateAnalytics()).start();
+
     }
 
     private JPanel createLeftSection() {
@@ -34,16 +53,23 @@ public class AnalyticsPanel extends JPanel {
         left.add(title);
         left.add(Box.createVerticalStrut(12));
 
-        left.add(createText("Total Spots:"));
-        left.add(createText("Occupied:"));
-        left.add(createText("Available:"));
-        left.add(createText("Reserved:"));
+        totalSpotsLbl = createText("Total Spots:");
+        occupiedLbl = createText("Occupied:");
+        availableLbl = createText("Available:");
+        reservedLbl = createText("Reserved:");
+
+        left.add(totalSpotsLbl);
+        left.add(occupiedLbl);
+        left.add(availableLbl);
+        left.add(reservedLbl);
+
 
         left.add(Box.createVerticalStrut(12));
         left.add(createDivider());
         left.add(Box.createVerticalStrut(12));
 
-        left.add(createText("Current Utilization:"));
+        utilizationLbl = createText("Current Utilization:");
+        left.add(utilizationLbl);
         left.add(Box.createVerticalStrut(30));
 
         JLabel revTitle = new JLabel("Revenue Summary");
@@ -54,11 +80,12 @@ public class AnalyticsPanel extends JPanel {
 
         left.add(Box.createVerticalStrut(12));
 
-        JComboBox<String> periodDropdown = new JComboBox<>(new String[]{
+        periodDropdown = new JComboBox<>(new String[]{
                 "Today",
                 "Last Week",
                 "Last Month"
         });
+        periodDropdown.addActionListener(e -> updateAnalytics());
         periodDropdown.setMaximumSize(new Dimension(180, 32));
         periodDropdown.setFont(new Font("Arial", Font.PLAIN, 14));
         periodDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -66,14 +93,16 @@ public class AnalyticsPanel extends JPanel {
         left.add(periodDropdown);
         left.add(Box.createVerticalStrut(18));
 
-        left.add(createText("Parking Fees:"));
-        left.add(createText("Fines Collection:"));
-
+        parkingFeesLbl = createText("Parking Fees:");
+        finesLbl = createText("Fines Collection:");
+        left.add(parkingFeesLbl);
+        left.add(finesLbl);
         left.add(Box.createVerticalStrut(12));
         left.add(createDivider());
         left.add(Box.createVerticalStrut(12));
 
-        left.add(createText("Total Revenue:"));
+        totalRevenueLbl = createText("Total Revenue:");
+        left.add(totalRevenueLbl);
 
         return left;
     }
@@ -187,4 +216,82 @@ public class AnalyticsPanel extends JPanel {
         sep.setMaximumSize(new Dimension(420, 1));
         return sep;
     }
+
+    private void updateAnalytics() {
+    try {
+        Connection conn = DatabaseConnection.connect();
+
+        // ===== OCCUPANCY SECTION =====
+
+        // Total spots
+        PreparedStatement pst1 =
+            conn.prepareStatement("SELECT COUNT(*) FROM parking_spots");
+        ResultSet rs1 = pst1.executeQuery();
+        int totalSpots = rs1.getInt(1);
+
+        // Occupied spots
+        PreparedStatement pst2 =
+            conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE status='OCCUPIED'");
+        ResultSet rs2 = pst2.executeQuery();
+        int occupied = rs2.getInt(1);
+
+        // Reserved spots
+        PreparedStatement pst3 =
+            conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE type='RESERVED'");
+        ResultSet rs3 = pst3.executeQuery();
+        int reserved = rs3.getInt(1);
+
+        int available = totalSpots - occupied;
+        double utilization = (occupied * 100.0) / totalSpots;
+
+        // ===== REVENUE FILTER =====
+        String period = (String) periodDropdown.getSelectedItem();
+
+        String dateFilter = "";
+        if(period.equals("Today")) {
+            dateFilter = "WHERE date(exit_time) = date('now')";
+        }
+        else if(period.equals("Last Week")) {
+            dateFilter = "WHERE exit_time >= date('now','-7 days')";
+        }
+        else if(period.equals("Last Month")) {
+            dateFilter = "WHERE exit_time >= date('now','-30 days')";
+        }
+
+        // ===== REVENUE QUERY =====
+        PreparedStatement pst4 =
+            conn.prepareStatement(
+                "SELECT " +
+                "IFNULL(SUM(parking_fee),0), " +
+                "IFNULL(SUM(fine_amount),0), " +
+                "IFNULL(SUM(total_paid),0) " +
+                "FROM receipts " + dateFilter
+            );
+
+        ResultSet rs4 = pst4.executeQuery();
+
+        double parkingFees = rs4.getDouble(1);
+        double fines = rs4.getDouble(2);
+        double totalRevenue = rs4.getDouble(3);
+
+        // ===== UPDATE LABELS =====
+        totalSpotsLbl.setText("Total Spots: " + totalSpots);
+        occupiedLbl.setText("Occupied: " + occupied);
+        availableLbl.setText("Available: " + available);
+        reservedLbl.setText("Reserved: " + reserved);
+        utilizationLbl.setText("Current Utilization: " + String.format("%.1f%%", utilization));
+
+        parkingFeesLbl.setText("Parking Fees: RM " + String.format("%.2f", parkingFees));
+        finesLbl.setText("Fines Collection: RM " + String.format("%.2f", fines));
+        totalRevenueLbl.setText("Total Revenue: RM " + String.format("%.2f", totalRevenue));
+
+        conn.close();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        }
+    }
+
+
+
 }

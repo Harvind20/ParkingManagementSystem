@@ -1,5 +1,4 @@
 package UserInterface;
-
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import java.awt.*;
@@ -15,12 +14,19 @@ public class ParkingRowBuilder {
             SpotSelectionUI ui,
             JPanel[] selectedSpotHolder
     ){
+        System.out.println("createRow() CALLED");
         JPanel row = new JPanel(new GridLayout(1,10,0,0));
         row.setOpaque(false);
 
         for(int i=0;i<10;i++){
             int spotNumber = i + 1;
-            
+
+            boolean occupied = //once connected to database, this will be determined by the parking lot's data rather than hardcoded
+            floor == 1 &&
+            rowIndex == 2 &&
+            spotNumber == 3;
+
+          
             String spotIdBackend = floor + "-" + rowIndex + "-" + spotNumber;
 
             ParkingLot lot = ParkingLot.getInstance();
@@ -44,7 +50,11 @@ public class ParkingRowBuilder {
             }
 
             JPanel spot = new JPanel();
-            spot.setBackground(c);
+            if (occupied) {
+                spot.setBackground(Color.RED);
+            } else {
+                spot.setBackground(c);
+            }
             spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
 
             boolean isAllowed = true;
