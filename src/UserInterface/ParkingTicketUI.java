@@ -22,6 +22,8 @@ public class ParkingTicketUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); 
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         JPanel background = new JPanel(new GridBagLayout());
         background.setBackground(new Color(2,52,63)); 
         add(background);

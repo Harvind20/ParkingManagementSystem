@@ -22,6 +22,8 @@ public class ExitPageUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         Color DARK = new Color(2,52,63);
         Color CREAM = new Color(240,237,204);
 
