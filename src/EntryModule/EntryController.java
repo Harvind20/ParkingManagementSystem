@@ -4,6 +4,8 @@ import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.Row;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 
 public class EntryController {
@@ -51,13 +53,40 @@ public class EntryController {
         ParkingSpot spot = lot.getSpotById(selectedSpotID);
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
+        if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
+            createReservedFine(vehicle.getLicensePlate());
+        }
         return "SUCCESS";
     }
 
     private boolean isEntryAllowed(Vehicle v, ParkingSpot.Type spotType) {
         if (v instanceof HandicappedVehicle) return true;
         if (v instanceof SUV && spotType == ParkingSpot.Type.COMPACT) return false;
-        if (spotType == ParkingSpot.Type.RESERVED) return false; 
         return true; 
     }
+
+    private void createReservedFine(String plate) {
+        try {
+            Connection conn = coreParkingSystem.DatabaseConnection.connect();
+
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+            PreparedStatement pst = conn.prepareStatement(sql);
+
+            pst.setString(1, plate);
+            pst.setDouble(2, 50.0);
+            pst.setString(3, "Non-VIP parked in RESERVED spot");
+            pst.setString(4, "UNPAID");
+
+            pst.executeUpdate();
+
+            pst.close();
+            conn.close();
+
+            System.out.println("Fine created for " + plate);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
