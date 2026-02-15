@@ -84,13 +84,9 @@ public class EntryPageUI extends JFrame {
         vipCheck.setOpaque(false);
         vipCheck.setForeground(CREAM);
 
-        JCheckBox handicapCheck = new JCheckBox("Handicapped Driver");
-        handicapCheck.setOpaque(false);
-        handicapCheck.setForeground(CREAM);
-
         formPanel.add(l1); formPanel.add(plateField);
         formPanel.add(l2); formPanel.add(typeBox);
-        formPanel.add(vipCheck); formPanel.add(handicapCheck);
+        formPanel.add(vipCheck); formPanel.add(new JLabel(""));
 
         gbc.gridy = 1;
         centerPanel.add(formPanel, gbc);
@@ -103,7 +99,6 @@ public class EntryPageUI extends JFrame {
             String plate = plateField.getText().trim();
             String vType = (String) typeBox.getSelectedItem();
             boolean isVip = vipCheck.isSelected();
-            boolean isHandicap = handicapCheck.isSelected();
             int specialCharacterCount = 0;
             int numOfDigits = 0;
 
@@ -158,8 +153,7 @@ public class EntryPageUI extends JFrame {
             ParkingLot.getInstance().saveTicket(ticket);
             
             // --- FIX IS HERE: Correct Constructor Call ---
-            new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, isVip, isHandicap).setVisible(true);
-
+            new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, isVip).setVisible(true);
             dispose(); 
         });
 

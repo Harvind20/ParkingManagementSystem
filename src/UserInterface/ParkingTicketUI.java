@@ -11,13 +11,11 @@ public class ParkingTicketUI extends JFrame {
     // Added fields to pass data to the next screen
     private Vehicle vehicle;
     private boolean isVip;
-    private boolean isHandicap;
 
     // Updated Constructor to accept Vehicle details
-    public ParkingTicketUI(String fullSuccessMsg, Vehicle vehicle, boolean isVip, boolean isHandicap) {
+    public ParkingTicketUI(String fullSuccessMsg, Vehicle vehicle, boolean isVip) {
         this.vehicle = vehicle;
         this.isVip = isVip;
-        this.isHandicap = isHandicap;
 
         setTitle("Parking Ticket");
         setSize(900, 600);
@@ -78,7 +76,6 @@ public class ParkingTicketUI extends JFrame {
         okBtn.addActionListener(e -> {
             SpotSelectionUI spotUI = new SpotSelectionUI(vehicle);
             spotUI.vipEnabled = isVip;
-            spotUI.handicapEnabled = isHandicap;
             spotUI.setVisible(true);
             dispose();
         });
