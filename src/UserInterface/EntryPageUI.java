@@ -2,7 +2,6 @@ package UserInterface;
 
 import EntryModule.*;
 import coreParkingSystem.ParkingLot;
-
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +20,6 @@ public class EntryPageUI extends JFrame {
         JPanel background = new JPanel(new BorderLayout());
         background.setBackground(DARK);
 
-        // Return button to go back to main menu
         JButton returnBtn = new RoundedButton("Return", CREAM);
         returnBtn.setForeground(DARK);
         returnBtn.setPreferredSize(new Dimension(100, 35));
@@ -114,16 +112,19 @@ public class EntryPageUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter a License Plate.");
                 return;
             }
-            for (int i = 0; i < plate.length();i++){
-                if (!(Character.isLetterOrDigit(plate.charAt(i)))){
+            
+            for (int i = 0; i < plate.length(); i++){
+                char c = plate.charAt(i);
+                if (!Character.isLetterOrDigit(c) && !Character.isSpaceChar(c)){
                     specialCharacterCount += 1;
                 }
-                else if((Character.isDigit(plate.charAt(i)))){
+                else if((Character.isDigit(c))){
                     numOfDigits += 1;
                 }
             }
+
             if (specialCharacterCount > 0){
-                JOptionPane.showMessageDialog(this, "No special characters allowed in license plate.");
+                JOptionPane.showMessageDialog(this, "No special characters allowed in license plate (Spaces are allowed).");
                 return;
             }
             else if (numOfDigits <= 0){
