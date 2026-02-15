@@ -6,6 +6,7 @@ import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.Row;
+import coreParkingSystem.VehicleDAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class EntryController {
 
     public String attemptPark(Vehicle vehicle, String selectedSpotID) {
         ParkingLot lot = ParkingLot.getInstance();
+        VehicleDAO vehicleDAO = new VehicleDAO(); // Create instance
 
         ParkingSpot.Status status = lot.getSpotStatus(selectedSpotID);
         ParkingSpot.Type type = lot.getSpotType(selectedSpotID);
@@ -70,15 +72,15 @@ public class EntryController {
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
 
-        // Fine if non-handicap parked in handicap spot
         if (type == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
             createHandicapViolationFine(vehicle.getLicensePlate());
         }
 
-
         if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
             createReservedFine(vehicle.getLicensePlate());
         }
+
+        vehicleDAO.syncTotalFines(vehicle.getLicensePlate());
 
         SwingUtilities.invokeLater(() -> 
             new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, vehicle.isVip(), selectedSpotID).setVisible(true)
@@ -112,33 +114,36 @@ public class EntryController {
 
             System.out.println("Fine created for " + plate);
 
+            new VehicleDAO().syncTotalFines(plate);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void createHandicapViolationFine(String plate) {
-    try {
-        Connection conn = DatabaseConnection.connect();
+        try {
+            Connection conn = DatabaseConnection.connect();
 
-        String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
-        PreparedStatement pst = conn.prepareStatement(sql);
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+            PreparedStatement pst = conn.prepareStatement(sql);
 
-        pst.setString(1, plate);
-        pst.setDouble(2, 100.0);
-        pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
-        pst.setString(4, "UNPAID");
+            pst.setString(1, plate);
+            pst.setDouble(2, 100.0);
+            pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
+            pst.setString(4, "UNPAID");
 
-        pst.executeUpdate();
+            pst.executeUpdate();
 
-        pst.close();
-        conn.close();
+            pst.close();
+            conn.close();
 
-        System.out.println("Handicap violation fine issued.");
+            System.out.println("Handicap violation fine issued.");
 
-    } catch (Exception e) {
-        e.printStackTrace();
+            new VehicleDAO().syncTotalFines(plate);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    }
-
 }

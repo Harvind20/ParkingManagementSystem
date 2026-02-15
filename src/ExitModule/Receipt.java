@@ -74,7 +74,7 @@ public class Receipt {
         
         StringBuilder sb = new StringBuilder();
         sb.append("\n").append("=".repeat(58)).append("\n");
-        sb.append("                   PARKING LOT RECEIPT\n");
+        sb.append("                 PARKING LOT RECEIPT\n");
         sb.append("=".repeat(58)).append("\n");
         sb.append(String.format("Receipt #:    %s\n", receiptNumber));
         sb.append(String.format("Ticket #:     %s\n", ticketId));
@@ -102,7 +102,7 @@ public class Receipt {
         
         sb.append("-".repeat(58)).append("\n");
         
-        double remainingFines = totalFinesOutstanding - finesPaidNow;
+        double remainingFines = totalFinesOutstanding;
         if (remainingFines > 0.01) {
             sb.append(String.format("Outstanding Fines: RM %.2f\n", remainingFines));
             sb.append("These fines will be carried to your next visit.\n");

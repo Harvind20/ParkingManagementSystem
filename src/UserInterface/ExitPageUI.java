@@ -31,7 +31,6 @@ public class ExitPageUI extends JFrame {
         background.setBackground(DARK);
         add(background);
 
-        // Return button
         JButton returnBtn = new RoundedButton("Return", CREAM);
         returnBtn.setForeground(DARK);
         returnBtn.setPreferredSize(new Dimension(100, 35));
@@ -211,7 +210,6 @@ public class ExitPageUI extends JFrame {
         lblDuration.setText(String.format("Hours Parked: %.0f hrs", durationHrs));
         lblVehicle.setText("Vehicle Type: " + currentExitData.getTicket().getVehicleType());
 
-        // --- LOGIC FIX: Bind spot data correctly (Handling "Not Parked") ---
         String spotDisplay = currentExitData.getSpotId();
         if ("Not Parked".equals(spotDisplay)) {
             lblSpot.setText("Spot: Not Parked");
