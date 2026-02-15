@@ -9,6 +9,8 @@ import coreParkingSystem.Row;
 import coreParkingSystem.VehicleDAO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
@@ -32,7 +34,7 @@ public class EntryController {
 
     public String attemptPark(Vehicle vehicle, String selectedSpotID) {
         ParkingLot lot = ParkingLot.getInstance();
-        VehicleDAO vehicleDAO = new VehicleDAO(); // Create instance
+        VehicleDAO vehicleDAO = new VehicleDAO(); 
 
         ParkingSpot.Status status = lot.getSpotStatus(selectedSpotID);
         ParkingSpot.Type type = lot.getSpotType(selectedSpotID);
@@ -72,6 +74,7 @@ public class EntryController {
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
 
+        // Fine if non-handicap parked in handicap spot
         if (type == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
             createHandicapViolationFine(vehicle.getLicensePlate());
         }
@@ -79,7 +82,7 @@ public class EntryController {
         if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
             createReservedFine(vehicle.getLicensePlate());
         }
-
+        
         vehicleDAO.syncTotalFines(vehicle.getLicensePlate());
 
         SwingUtilities.invokeLater(() -> 
@@ -97,15 +100,18 @@ public class EntryController {
 
     private void createReservedFine(String plate) {
         try {
-            Connection conn = coreParkingSystem.DatabaseConnection.connect();
+            Connection conn = DatabaseConnection.connect();
 
-            String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement pst = conn.prepareStatement(sql);
+            
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             pst.setString(1, plate);
             pst.setDouble(2, 50.0);
             pst.setString(3, "Non-VIP parked in RESERVED spot");
             pst.setString(4, "UNPAID");
+            pst.setString(5, timestamp);
 
             pst.executeUpdate();
 
@@ -113,7 +119,6 @@ public class EntryController {
             conn.close();
 
             System.out.println("Fine created for " + plate);
-
             new VehicleDAO().syncTotalFines(plate);
 
         } catch (Exception e) {
@@ -125,13 +130,16 @@ public class EntryController {
         try {
             Connection conn = DatabaseConnection.connect();
 
-            String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement pst = conn.prepareStatement(sql);
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             pst.setString(1, plate);
             pst.setDouble(2, 100.0);
             pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
             pst.setString(4, "UNPAID");
+            pst.setString(5, timestamp);
 
             pst.executeUpdate();
 
@@ -139,7 +147,6 @@ public class EntryController {
             conn.close();
 
             System.out.println("Handicap violation fine issued.");
-
             new VehicleDAO().syncTotalFines(plate);
 
         } catch (Exception e) {

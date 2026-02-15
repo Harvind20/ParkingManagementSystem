@@ -53,6 +53,7 @@ public class DatabaseConnection {
                 + " amount REAL NOT NULL,"
                 + " reason TEXT NOT NULL,"
                 + " status TEXT NOT NULL,"
+                + " date_issued TEXT,"
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
