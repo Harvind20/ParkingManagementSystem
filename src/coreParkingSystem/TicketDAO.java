@@ -1,13 +1,15 @@
 package coreParkingSystem;
 
 import EntryModule.Ticket;
-
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TicketDAO implements GenericDAO<Ticket, String> {
+
+    private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm:ss");
 
     @Override
     public void create(Ticket ticket) {
@@ -17,7 +19,7 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, ticket.getTicketID());
             pstmt.setString(2, ticket.getLicensePlate());
-            pstmt.setString(3, ticket.getEntryTime().toString());
+            pstmt.setString(3, ticket.getEntryTime().format(DB_FORMATTER));
             pstmt.setString(4, "ACTIVE");
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -33,7 +35,7 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
             pstmt.setString(1, plateNum);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                LocalDateTime time = LocalDateTime.parse(rs.getString("entry_time"));
+                LocalDateTime time = LocalDateTime.parse(rs.getString("entry_time"), DB_FORMATTER);
                 Ticket t = new Ticket.TicketBuilder()
                         .addPlate(rs.getString("plate_num"))
                         .addTime(time)
