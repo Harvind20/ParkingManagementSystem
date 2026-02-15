@@ -58,7 +58,7 @@ public class ExitSystem {
             return null;
         }
         
-        // --- LOGIC FIX: Handle vehicles that entered but didn't pick a spot ---
+        // Handle vehicles that entered but didn't pick a spot
         String spotId;
         String spotTypeString;
         
@@ -114,7 +114,6 @@ public class ExitSystem {
         ParkingSpotDAO spotDAO = new ParkingSpotDAO();
         ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         
-        // --- LOGIC FIX: Handle null spot during update check ---
         String spotTypeString = (spot != null) ? spot.getSpotType().name() : "REGULAR";
 
         double currentParkingFee = feeCalculator.calculateParkingFee(
@@ -211,10 +210,18 @@ public class ExitSystem {
             System.out.println("Outstanding Fines Recorded: RM " + String.format("%.2f", remainingFines));
         }
 
-        // --- LOGIC FIX: Only update spot status if a spot was actually occupied ---
         String receiptSpotType = "NONE";
         if (spot != null && !spotId.equals("Not Parked")) {
+            // 1. Set Status to AVAILABLE
             ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
+            
+            // 2. --- LOGIC FIX: Explicitly clear the vehicle from the spot in Memory and DB ---
+            ParkingSpot systemSpot = ParkingLot.getInstance().getSpotById(spotId);
+            if (systemSpot != null) {
+                systemSpot.setCurrentlyParkedVehicleID(null); 
+                ParkingLot.getInstance().updateSpotOccupancy(systemSpot); // Updates DB
+            }
+            
             receiptSpotType = spot.getSpotType().name();
         } else {
             receiptSpotType = "REGULAR"; // Default
