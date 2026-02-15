@@ -1,14 +1,15 @@
 package UserInterface;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import javax.swing.*;
 
 public class LotStatusPanel extends JPanel {
 
     private JPanel topBlock, bottomBlock;
     private JComboBox<String> floorDropdown;
+    private JPanel floorWrapper; 
 
     private JPanel legendOccupied, legendRegular, legendCompact, legendVIP, legendHandicap;
 
@@ -19,19 +20,21 @@ public class LotStatusPanel extends JPanel {
     boolean vipEnabled = true;
 
     JPanel[] selectedSpotHolder = new JPanel[1];
+    
+    private Timer refreshTimer;
 
     public LotStatusPanel() {
 
         setLayout(null);
         setBackground(ThemeColors.PRIMARY);
 
-        // Return button
         RoundedButton returnBtn = new RoundedButton("Return", ThemeColors.SECONDARY);
         returnBtn.setForeground(ThemeColors.PRIMARY);
         returnBtn.setBounds(30, 20, 120, 40);
         add(returnBtn);
 
         returnBtn.addActionListener(e -> {
+            if (refreshTimer != null) refreshTimer.stop();
             new MainMenuUI().setVisible(true);
             SwingUtilities.getWindowAncestor(this).dispose();
         });
@@ -42,7 +45,7 @@ public class LotStatusPanel extends JPanel {
                 "3rd Floor"
         });
 
-        RoundedPanel floorWrapper = new RoundedPanel(25);
+        floorWrapper = new RoundedPanel(25);
         floorWrapper.setBackground(ThemeColors.SECONDARY);
         floorWrapper.setLayout(new BorderLayout());
         floorWrapper.add(floorDropdown);
@@ -78,36 +81,43 @@ public class LotStatusPanel extends JPanel {
 
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
-
-                int panelW = getWidth();
-                int panelH = getHeight();
-
-                int blockW = 700;
-                int blockH = 180;
-
-                int topX = panelW/2 - blockW/2;
-                int topY = panelH/2 - 220;
-
-                int bottomX = topX;
-                int bottomY = panelH/2 + 20;
-
-                topBlock.setBounds(topX, topY, blockW, blockH);
-                bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
-
-                floorWrapper.setBounds(panelW/2 - 100, 20, 200, 40);
-
-                int ly = panelH/2 - 60;
-                legendOccupied.setBounds(40, ly, 180, 20);
-                legendRegular.setBounds(40, ly+30, 180, 20);
-                legendCompact.setBounds(40, ly+60, 180, 20);
-                legendVIP.setBounds(40, ly+90, 180, 20);
-                legendHandicap.setBounds(40, ly+120, 180, 20);
+                updateLayout();
             }
         });
+
+        refreshTimer = new Timer(5000, e -> reloadGrid());
+        refreshTimer.start();
+    }
+
+    private void updateLayout() {
+        int panelW = getWidth();
+        int panelH = getHeight();
+
+        if (panelW == 0 || panelH == 0) return;
+
+        int blockW = 700;
+        int blockH = 180;
+
+        int topX = panelW/2 - blockW/2;
+        int topY = panelH/2 - 220;
+
+        int bottomX = topX;
+        int bottomY = panelH/2 + 20;
+
+        topBlock.setBounds(topX, topY, blockW, blockH);
+        bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
+
+        floorWrapper.setBounds(panelW/2 - 100, 20, 200, 40);
+
+        int ly = panelH/2 - 60;
+        legendOccupied.setBounds(40, ly, 180, 20);
+        legendRegular.setBounds(40, ly+30, 180, 20);
+        legendCompact.setBounds(40, ly+60, 180, 20);
+        legendVIP.setBounds(40, ly+90, 180, 20);
+        legendHandicap.setBounds(40, ly+120, 180, 20);
     }
 
     private void reloadGrid() {
-
         remove(topBlock);
         remove(bottomBlock);
 
@@ -119,10 +129,9 @@ public class LotStatusPanel extends JPanel {
         add(topBlock);
         add(bottomBlock);
 
+        updateLayout();
         revalidate();
         repaint();
-
-        dispatchEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
     }
 
     private JPanel createRowBlock(){
