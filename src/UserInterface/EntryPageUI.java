@@ -83,10 +83,14 @@ public class EntryPageUI extends JFrame {
         JCheckBox vipCheck = new JCheckBox("VIP Member");
         vipCheck.setOpaque(false);
         vipCheck.setForeground(CREAM);
+        
+        JCheckBox handicapCheck = new JCheckBox("Handicapped Driver");
+        handicapCheck.setOpaque(false);
+        handicapCheck.setForeground(CREAM);
 
         formPanel.add(l1); formPanel.add(plateField);
         formPanel.add(l2); formPanel.add(typeBox);
-        formPanel.add(vipCheck); formPanel.add(new JLabel(""));
+        formPanel.add(vipCheck); formPanel.add(handicapCheck);
 
         gbc.gridy = 1;
         centerPanel.add(formPanel, gbc);
@@ -99,6 +103,7 @@ public class EntryPageUI extends JFrame {
             String plate = plateField.getText().trim();
             String vType = (String) typeBox.getSelectedItem();
             boolean isVip = vipCheck.isSelected();
+            boolean isHandicap = handicapCheck.isSelected();
             int specialCharacterCount = 0;
             int numOfDigits = 0;
 
@@ -142,20 +147,11 @@ public class EntryPageUI extends JFrame {
             }
 
             vehicle.setVip(isVip);
-
-            Ticket ticket = new Ticket.TicketBuilder()
-                .addPlate(vehicle.getLicensePlate())
-                .addTime(vehicle.getEntryTime())
-                .addVehicleType(vehicle.getVehicleType())
-                .addSequenceNumber(ParkingLot.getInstance().getNextSequenceNumber(vehicle.getLicensePlate()))
-                .build();
-            vehicle.setTicketId(ticket.toString());
+            SpotSelectionUI spotUI = new SpotSelectionUI(vehicle);
+            spotUI.vipEnabled = isVip;
+            spotUI.handicapEnabled = isHandicap || (vehicle instanceof HandicappedVehicle);
             
-            ParkingLot.getInstance().saveVehicle(vehicle);
-            ParkingLot.getInstance().saveTicket(ticket);
-            
-            // --- FIX IS HERE: Correct Constructor Call ---
-            new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, isVip).setVisible(true);
+            spotUI.setVisible(true);
             dispose(); 
         });
 

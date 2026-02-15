@@ -1,5 +1,6 @@
 package EntryModule;
 
+import UserInterface.ParkingTicketUI;
 import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
@@ -7,6 +8,7 @@ import coreParkingSystem.Row;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import javax.swing.SwingUtilities;
 
 public class EntryController {
 
@@ -49,13 +51,32 @@ public class EntryController {
              return "ERROR: Vehicle type not allowed in this spot";
         }
 
+        lot.saveVehicle(vehicle);
+
+        Ticket ticket = new Ticket.TicketBuilder()
+            .addPlate(vehicle.getLicensePlate())
+            .addTime(vehicle.getEntryTime())
+            .addVehicleType(vehicle.getVehicleType())
+            .addSequenceNumber(lot.getNextSequenceNumber(vehicle.getLicensePlate()))
+            .build();
+        
+        vehicle.setTicketId(ticket.toString());
+
+        lot.saveTicket(ticket);
+
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
         ParkingSpot spot = lot.getSpotById(selectedSpotID);
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
+
         if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
             createReservedFine(vehicle.getLicensePlate());
         }
+
+        SwingUtilities.invokeLater(() -> 
+            new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, vehicle.isVip(), selectedSpotID).setVisible(true)
+        );
+
         return "SUCCESS";
     }
 
@@ -88,5 +109,4 @@ public class EntryController {
             e.printStackTrace();
         }
     }
-
 }
