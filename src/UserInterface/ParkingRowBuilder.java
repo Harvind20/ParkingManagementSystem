@@ -64,7 +64,6 @@ public class ParkingRowBuilder {
 
             boolean isAllowed = true;
             if(isOccupied) isAllowed = false;
-            if((typeString.equals("HANDICAPPED") || typeString.equals("HANDICAP")) && !handicapEnabled) isAllowed = false;
             if((typeString.equals("VIP") || typeString.equals("RESERVED")) && !vipEnabled) isAllowed = false;
 
             if(!isAllowed) {

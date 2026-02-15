@@ -1,6 +1,7 @@
 package EntryModule;
 
 import UserInterface.ParkingTicketUI;
+import coreParkingSystem.DatabaseConnection;
 import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
@@ -69,6 +70,12 @@ public class EntryController {
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
 
+        // Fine if non-handicap parked in handicap spot
+        if (type == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
+            createHandicapViolationFine(vehicle.getLicensePlate());
+        }
+
+
         if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
             createReservedFine(vehicle.getLicensePlate());
         }
@@ -109,4 +116,29 @@ public class EntryController {
             e.printStackTrace();
         }
     }
+
+    private void createHandicapViolationFine(String plate) {
+    try {
+        Connection conn = DatabaseConnection.connect();
+
+        String sql = "INSERT INTO fines (plate_num, amount, reason, status) VALUES (?, ?, ?, ?)";
+        PreparedStatement pst = conn.prepareStatement(sql);
+
+        pst.setString(1, plate);
+        pst.setDouble(2, 100.0);
+        pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
+        pst.setString(4, "UNPAID");
+
+        pst.executeUpdate();
+
+        pst.close();
+        conn.close();
+
+        System.out.println("Handicap violation fine issued.");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }
+
 }
