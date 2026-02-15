@@ -67,6 +67,7 @@ public class Receipt {
     public String getPaymentMethod() { return paymentMethod; }
     public double getTotalFinesOutstanding() { return totalFinesOutstanding; }
     public boolean isPaymentSuccess() { return paymentSuccess; }
+    public double getChange() { return change; } // Added Getter
 
     @Override
     public String toString() {

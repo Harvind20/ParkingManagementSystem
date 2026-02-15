@@ -140,16 +140,22 @@ public class PaymentPageUI extends JFrame {
 
             double oldFee = pendingExit.getParkingFee();
             double oldFines = pendingExit.getCurrentFines();
+            
+            double parkingAmountToSend = pendingExit.getParkingFee();
 
             if (methodDropdown.getSelectedItem().equals("Cash")) {
                 try {
                     String cashText = cashInput.getText().trim();
                     if(cashText.isEmpty()) throw new NumberFormatException();
                     double cashGiven = Double.parseDouble(cashText);
+                    
                     if (cashGiven < selectedTotal) {
                         JOptionPane.showMessageDialog(this, "Insufficient Cash! Need: RM " + String.format("%.2f", selectedTotal));
                         return;
                     }
+                    
+                    parkingAmountToSend = cashGiven - fineAmountToPay;
+
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Invalid Cash Amount");
                     return;
@@ -161,7 +167,7 @@ public class PaymentPageUI extends JFrame {
 
             Receipt receipt = exitSystem.confirmExit(
                 pendingExit.getLicensePlate(),
-                pendingExit.getParkingFee(),
+                parkingAmountToSend,
                 fineAmountToPay,
                 method
             );

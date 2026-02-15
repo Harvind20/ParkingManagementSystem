@@ -79,6 +79,10 @@ public class ReceiptPageUI extends JFrame {
 
         card.add(createCenter("Payment Method: " + method, 14, false));
         card.add(createCenter("Total Paid: " + totalPaidStr, 14, false));
+        
+        if (receipt != null && receipt.getPaymentMethod().equalsIgnoreCase("CASH") && receipt.getChange() > 0) {
+            card.add(createCenter("Change: " + String.format("RM %.2f", receipt.getChange()), 14, false));
+        }
 
         card.add(Box.createVerticalStrut(28));
 
