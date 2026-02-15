@@ -1,8 +1,12 @@
 package coreParkingSystem;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AdminSettingsDAO {
+import EntryModule.Vehicle;
+
+public class AdminSettingsDAO implements GenericDAO<Object,Integer>{
 
     public String getCurrentStrategy() {
         String sql = "SELECT setting_value FROM admin_settings WHERE setting_key = 'fine_strategy'";
@@ -29,4 +33,10 @@ public class AdminSettingsDAO {
             e.printStackTrace();
         }
     }
+
+    @Override public void create(Object t) {}
+    @Override public Object read(Integer id) { return null; }
+    @Override public void update(Object t) {}
+    @Override public void delete(Integer id) {}
+    @Override public List<Object> getAll() { return new ArrayList<>(); }
 }

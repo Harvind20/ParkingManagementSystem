@@ -21,7 +21,6 @@ public class ExitSystem {
     private ReceiptDAO receiptDAO;
     private VehicleDAO vehicleDAO;
     
-    private static Map<String, ExitRecord> exitRecords = new HashMap<>();
     private static Map<String, PendingExit> pendingExits = new HashMap<>();
     
     private LocalDateTime testTime = null;
@@ -32,14 +31,6 @@ public class ExitSystem {
         this.fineDAO = new FineDAO();
         this.receiptDAO = new ReceiptDAO();
         this.vehicleDAO = new VehicleDAO();
-    }
-    
-    public void setTestTime(LocalDateTime time) {
-        this.testTime = time;
-    }
-    
-    public void clearTestTime() {
-        this.testTime = null;
     }
     
     private LocalDateTime getCurrentTime() {
@@ -62,7 +53,7 @@ public class ExitSystem {
         String spotTypeString;
         
         if (spot != null) {
-            spotId = parseSpotId(spot.getSpotID());
+            spotId = spot.getSpotID();
             spotTypeString = spot.getSpotType().name();
         } else {
             spotId = "Not Parked";
@@ -251,10 +242,6 @@ public class ExitSystem {
         return entryTime.plusMinutes(hoursParked * 60);
     }
 
-    private String parseSpotId(String spotId) {
-        return spotId;
-    }
-
     private double calculateFines(Ticket ticket, LocalDateTime exitTime) {
         double hoursParked = calculateHoursParked(ticket.getEntryTime(), exitTime);
         if (hoursParked <= 24) return 0.0;
@@ -325,8 +312,5 @@ public class ExitSystem {
         public void setTotalDue(double totalDue) { this.totalDue = totalDue; }
         public void setLastCheckedTime(LocalDateTime time) { this.lastCheckedTime = time; }
         public void setNextHourThreshold(LocalDateTime threshold) { this.nextHourThreshold = threshold; }
-    }
-    
-    public static class ExitRecord {
     }
 }
