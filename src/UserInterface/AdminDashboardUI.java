@@ -16,6 +16,8 @@ public class AdminDashboardUI extends JFrame {
         background.setBackground(ThemeColors.PRIMARY);
         add(background);
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.setBackground(ThemeColors.SECONDARY);
 

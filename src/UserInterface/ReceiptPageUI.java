@@ -26,6 +26,8 @@ public class ReceiptPageUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         JPanel background = new JPanel(new GridBagLayout());
         background.setBackground(new Color(2,52,63)); // #02343F
         add(background);

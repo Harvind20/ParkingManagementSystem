@@ -51,6 +51,8 @@ public class SpotSelectionUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         background = new JPanel(null);
         background.setBackground(ThemeColors.PRIMARY);
         add(background);

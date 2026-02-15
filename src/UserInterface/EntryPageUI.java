@@ -14,6 +14,8 @@ public class EntryPageUI extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         Color DARK = new Color(0x02,0x34,0x3F);
         Color CREAM = new Color(0xF0,0xED,0xCC);
 
