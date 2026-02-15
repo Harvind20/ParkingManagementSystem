@@ -1,8 +1,13 @@
 package UserInterface;
+import coreParkingSystem.DatabaseConnection;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.swing.*;
+
 
 public class ParkingRowBuilder {
 
@@ -21,10 +26,10 @@ public class ParkingRowBuilder {
         for(int i=0;i<10;i++){
             int spotNumber = i + 1;
 
-            boolean occupied = //once connected to database, this will be determined by the parking lot's data rather than hardcoded
-            floor == 1 &&
-            rowIndex == 2 &&
-            spotNumber == 3;
+            String dbSpotId = floor + "-" + rowIndex + "-" + spotNumber;
+
+            boolean occupied = isSpotOccupied(dbSpotId);
+
 
           
             String spotIdBackend = floor + "-" + rowIndex + "-" + spotNumber;
@@ -34,7 +39,7 @@ public class ParkingRowBuilder {
             ParkingSpot.Type typeEnum = lot.getSpotType(spotIdBackend);
             
             String typeString = (typeEnum != null) ? typeEnum.toString() : getMockType(floor, i);
-            boolean isOccupied = (status == ParkingSpot.Status.OCCUPIED);
+            boolean isOccupied = occupied;
 
             Color c;
             if(isOccupied) {
@@ -111,5 +116,36 @@ public class ParkingRowBuilder {
         if(col % 2 == 0) return "REGULAR";
         return "COMPACT";
     }
+
+    private static boolean isSpotOccupied(String spotId) {
+    boolean occupied = false;
+
+    try {
+        Connection conn = DatabaseConnection.connect();
+
+        String sql = "SELECT status FROM parking_spots WHERE spot_id=?";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        pst.setString(1, spotId);
+
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            String status = rs.getString("status");
+            if ("OCCUPIED".equalsIgnoreCase(status)) {
+                occupied = true;
+            }
+        }
+
+        rs.close();
+        pst.close();
+        conn.close();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return occupied;
+    }
+
 }
 

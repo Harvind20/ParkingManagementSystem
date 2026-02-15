@@ -3,6 +3,8 @@ package UserInterface;
 import EntryModule.EntryController;
 import EntryModule.Vehicle;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import javax.swing.*;
 
 public class ConfirmSpotDialog extends JDialog {
@@ -68,6 +70,23 @@ public class ConfirmSpotDialog extends JDialog {
             String result = controller.attemptPark(vehicle, backendSpotId);
 
             if (result.startsWith("SUCCESS")) {
+                try {
+                Connection conn = coreParkingSystem.DatabaseConnection.connect();
+
+                String sql = "UPDATE parking_spots SET status='OCCUPIED' WHERE spot_id=?";
+                PreparedStatement pst = conn.prepareStatement(sql);
+
+                pst.setString(1, spotId);  // IMPORTANT: use original label format
+                pst.executeUpdate();
+
+                pst.close();
+                conn.close();
+
+                System.out.println("DB updated: " + spotId);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
                 dispose();
                 parent.dispose();
                 new MainMenuUI().setVisible(true);
