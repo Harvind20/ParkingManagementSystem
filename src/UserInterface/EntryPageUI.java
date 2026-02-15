@@ -141,6 +141,8 @@ public class EntryPageUI extends JFrame {
                 default: vehicle = new Car(plate);
             }
 
+            vehicle.setVip(isVip);
+
             Ticket ticket = new Ticket.TicketBuilder()
                 .addPlate(vehicle.getLicensePlate())
                 .addTime(vehicle.getEntryTime())
