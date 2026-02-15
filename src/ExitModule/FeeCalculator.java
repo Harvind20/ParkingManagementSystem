@@ -14,11 +14,17 @@ public class FeeCalculator {
         long hours = calculateDurationInHours(entryTime, exitTime);
         
         if (vehicleType.equalsIgnoreCase("HandicappedVehicle")) {
-            if (spotType.equalsIgnoreCase("handicapped")) {
+
+            // FREE if parked in handicap spot
+            if (spotType.equalsIgnoreCase("handicap") ||
+                spotType.equalsIgnoreCase("handicapped")) {
                 return 0.0;
             }
-            return hours * 2.0;
+
+            // RM2/hour everywhere else
+            return hours * RATE_HANDICAPPED;
         }
+
         
         double hourlyRate = getHourlyRateForSpotType(spotType);
         return hours * hourlyRate;
@@ -74,5 +80,13 @@ public class FeeCalculator {
         fee = calculator.calculateParkingFee(
             now.minusHours(3), now, "Regular", "Car");
         System.out.println("3. Regular car in Regular spot (3 hours): RM " + fee);
+
+        fee = calculator.calculateParkingFee(
+            now.minusHours(3),
+            now,
+            "HANDICAP",
+            "HandicappedVehicle"
+        );
+        System.out.println("4. Handicapped in HANDICAP spot (3 hours): RM " + fee);
     }
 }
