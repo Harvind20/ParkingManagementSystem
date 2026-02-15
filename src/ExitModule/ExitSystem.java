@@ -58,13 +58,24 @@ public class ExitSystem {
             return null;
         }
         
-        String spotId = parseSpotId(spot.getSpotID());
+        // --- LOGIC FIX: Handle vehicles that entered but didn't pick a spot ---
+        String spotId;
+        String spotTypeString;
+        
+        if (spot != null) {
+            spotId = parseSpotId(spot.getSpotID());
+            spotTypeString = spot.getSpotType().name();
+        } else {
+            spotId = "Not Parked";
+            spotTypeString = "REGULAR"; // Default to REGULAR rate if they didn't park
+            System.out.println("[INFO] Vehicle has Ticket but no Spot (Drive-through or Error). Applying Regular rates.");
+        }
         
         LocalDateTime entryTime = ticket.getEntryTime();
         LocalDateTime initiationTime = getCurrentTime();
         
         double parkingFee = feeCalculator.calculateParkingFee(
-            entryTime, initiationTime, spot.getSpotType().name(), ticket.getVehicleType()
+            entryTime, initiationTime, spotTypeString, ticket.getVehicleType()
         );
         
         double currentFines = calculateFines(ticket, initiationTime);
@@ -103,9 +114,12 @@ public class ExitSystem {
         ParkingSpotDAO spotDAO = new ParkingSpotDAO();
         ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         
+        // --- LOGIC FIX: Handle null spot during update check ---
+        String spotTypeString = (spot != null) ? spot.getSpotType().name() : "REGULAR";
+
         double currentParkingFee = feeCalculator.calculateParkingFee(
             pending.getEntryTime(), confirmationTime, 
-            spot.getSpotType().name(), ticket.getVehicleType()
+            spotTypeString, ticket.getVehicleType()
         );
         
         double currentFines = calculateFines(ticket, confirmationTime);
@@ -132,7 +146,7 @@ public class ExitSystem {
     }
     
     public Receipt confirmExit(String licensePlate, double parkingFeePayment, 
-                              double finePayment, String paymentMethod) {
+                               double finePayment, String paymentMethod) {
         
         System.out.println("\n=== Confirming Exit for Vehicle: " + licensePlate + " ===\n");
         ParkingSpotDAO spotDAO = new ParkingSpotDAO();
@@ -197,7 +211,15 @@ public class ExitSystem {
             System.out.println("Outstanding Fines Recorded: RM " + String.format("%.2f", remainingFines));
         }
 
-        ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
+        // --- LOGIC FIX: Only update spot status if a spot was actually occupied ---
+        String receiptSpotType = "NONE";
+        if (spot != null && !spotId.equals("Not Parked")) {
+            ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
+            receiptSpotType = spot.getSpotType().name();
+        } else {
+            receiptSpotType = "REGULAR"; // Default
+        }
+
         ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
         
@@ -208,7 +230,7 @@ public class ExitSystem {
             ticket.getEntryTime(),
             confirmationTime,
             spotId,
-            spot.getSpotType().name(),
+            receiptSpotType,
             ticket.getVehicleType(),
             calculateHoursParked(ticket.getEntryTime(), confirmationTime),
             parkingFee,

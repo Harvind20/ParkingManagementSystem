@@ -132,19 +132,18 @@ public class EntryPageUI extends JFrame {
                 return;
             }
 
+            // Check for duplicate ACTIVE tickets
+            if (ParkingLot.getInstance().getTicketByPlate(plate) != null) {
+                JOptionPane.showMessageDialog(this, "Error: This vehicle already has an ACTIVE ticket.");
+                return;
+            }
+
             Vehicle vehicle;
             switch (vType) {
-                case "SUV": 
-                    vehicle = new SUV(plate); 
-                    break;
-                case "Motorcycle": 
-                    vehicle = new Motorcycle(plate); 
-                    break;
-                case "HandicappedVehicle": 
-                    vehicle = new HandicappedVehicle(plate); 
-                    break;
-                default: 
-                    vehicle = new Car(plate);
+                case "SUV": vehicle = new SUV(plate); break;
+                case "Motorcycle": vehicle = new Motorcycle(plate); break;
+                case "HandicappedVehicle": vehicle = new HandicappedVehicle(plate); break;
+                default: vehicle = new Car(plate);
             }
 
             Ticket ticket = new Ticket.TicketBuilder()
@@ -154,15 +153,13 @@ public class EntryPageUI extends JFrame {
                 .addSequenceNumber(ParkingLot.getInstance().getNextSequenceNumber(vehicle.getLicensePlate()))
                 .build();
             vehicle.setTicketId(ticket.toString());
+            
             ParkingLot.getInstance().saveVehicle(vehicle);
             ParkingLot.getInstance().saveTicket(ticket);
-            new ParkingTicketUI("SUCCESS: "+ticket.toString(),vehicle.getLicensePlate());
+            
+            // --- FIX IS HERE: Correct Constructor Call ---
+            new ParkingTicketUI("SUCCESS: " + ticket.toString(), vehicle, isVip, isHandicap).setVisible(true);
 
-            SpotSelectionUI spotUI = new SpotSelectionUI(vehicle); 
-            spotUI.vipEnabled = isVip; 
-            spotUI.handicapEnabled = isHandicap || (vehicle instanceof HandicappedVehicle);
-
-            spotUI.setVisible(true);
             dispose(); 
         });
 
