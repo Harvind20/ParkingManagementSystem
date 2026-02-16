@@ -20,7 +20,10 @@ public class OutstandingFinesPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(ThemeColors.PRIMARY);
 
+        // top section for searching fines by plate
         add(createTopSection(), BorderLayout.NORTH);
+
+        // table showing unpaid fines
         add(createTableSection(), BorderLayout.CENTER);
     }
 
@@ -44,6 +47,7 @@ public class OutstandingFinesPanel extends JPanel {
         plateField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         plateField.setBorder(BorderFactory.createEmptyBorder(8,10,8,10));
 
+        // button triggers search using entered plate
         RoundedButton findBtn = new RoundedButton("FIND", ThemeColors.SECONDARY);
         findBtn.setPreferredSize(new Dimension(90, 40));
         findBtn.addActionListener(e -> searchFines());
@@ -71,7 +75,10 @@ public class OutstandingFinesPanel extends JPanel {
         table = new JTable(tableModel);
         table.setFillsViewportHeight(true);
 
+        // apply visual styling to table
         styleTable();
+
+        // load all unpaid fines initially
         loadFinesFromDB("");  
 
         JScrollPane scrollPane = new JScrollPane(table);
@@ -106,6 +113,7 @@ public class OutstandingFinesPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setPreferredSize(new Dimension(header.getWidth(), 40));
 
+        // center align all cells and add alternating row colors
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                            boolean isSelected, boolean hasFocus,
@@ -125,6 +133,7 @@ public class OutstandingFinesPanel extends JPanel {
         });
     }
 
+    // pulls unpaid fines from DB, optionally filtered by plate
     private void loadFinesFromDB(String plateQuery) {
         tableModel.setRowCount(0);
         
@@ -162,6 +171,7 @@ public class OutstandingFinesPanel extends JPanel {
         }
     }
 
+    // triggered when user clicks FIND
     private void searchFines() {
         String plate = plateField.getText().trim();
         loadFinesFromDB(plate);

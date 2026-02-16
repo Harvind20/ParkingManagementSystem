@@ -27,6 +27,7 @@ public class AnalyticsPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(ThemeColors.PRIMARY);
 
+        // main container holding left and right analytics cards
         JPanel content = new JPanel(new GridLayout(1, 2, 20, 0));
         content.setBackground(ThemeColors.PRIMARY);
         content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -35,12 +36,15 @@ public class AnalyticsPanel extends JPanel {
         content.add(createRightSection());
 
         add(content, BorderLayout.CENTER);
+
+        // load data immediately and refresh every 10 seconds
         updateAnalytics();
         new javax.swing.Timer(10000, e -> updateAnalytics()).start();
     }
 
     private JPanel createLeftSection() {
 
+        // card showing occupancy and revenue info
         RoundedPanel card = new RoundedPanel(30);
         card.setBackground(ThemeColors.SECONDARY);
         card.setLayout(new BorderLayout());
@@ -58,6 +62,7 @@ public class AnalyticsPanel extends JPanel {
         left.add(title);
         left.add(Box.createVerticalStrut(12));
 
+        // labels that will be updated from DB
         totalSpotsLbl = createTextPrimary("Total Spots:");
         occupiedLbl = createTextPrimary("Occupied:");
         availableLbl = createTextPrimary("Available:");
@@ -82,6 +87,7 @@ public class AnalyticsPanel extends JPanel {
         revTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
         left.add(revTitle);
 
+        // note to indicate revenue is filtered to today only
         JLabel todayNote = new JLabel("Showing today's data only", SwingConstants.CENTER);
         todayNote.setForeground(ThemeColors.PRIMARY);
         todayNote.setFont(new Font("Arial", Font.ITALIC, 12));
@@ -108,6 +114,7 @@ public class AnalyticsPanel extends JPanel {
 
     private JPanel createRightSection() {
 
+        // card for selecting fine calculation strategy
         RoundedPanel card = new RoundedPanel(30);
         card.setBackground(ThemeColors.SECONDARY);
         card.setLayout(new BorderLayout());
@@ -124,6 +131,7 @@ public class AnalyticsPanel extends JPanel {
 
         right.add(title);
 
+        // shows current scheme pulled from DB
         activeSchemeLbl = new JLabel("Active Scheme: Loading...", SwingConstants.CENTER);
         activeSchemeLbl.setForeground(ThemeColors.PRIMARY);
         activeSchemeLbl.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -147,6 +155,7 @@ public class AnalyticsPanel extends JPanel {
         group.add(progressive);
         group.add(hourly);
 
+        // set selected radio based on current value stored in DB
         String currentStrategy = new AdminSettingsDAO().getCurrentStrategy();
         if ("HOURLY".equalsIgnoreCase(currentStrategy)) {
             hourly.setSelected(true);
@@ -158,6 +167,7 @@ public class AnalyticsPanel extends JPanel {
             fixed.setSelected(true);
         }
 
+        // open confirmation dialog when changing scheme
         fixed.addActionListener(e ->
             new ConfirmSchemeChangeDialog(
                 (JFrame) SwingUtilities.getWindowAncestor(this),
@@ -205,6 +215,7 @@ public class AnalyticsPanel extends JPanel {
         return l;
     }
 
+    // styling for radio buttons
     private void styleRadioPrimary(JRadioButton r) {
         r.setForeground(ThemeColors.PRIMARY);
         r.setOpaque(false);
@@ -212,6 +223,7 @@ public class AnalyticsPanel extends JPanel {
         r.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
 
+    // divider used to visually separate sections
     private JSeparator createDividerPrimary() {
         JSeparator sep = new JSeparator();
         sep.setForeground(ThemeColors.PRIMARY);
@@ -219,20 +231,24 @@ public class AnalyticsPanel extends JPanel {
         return sep;
     }
 
+    // pulls latest occupancy and revenue data from DB and updates labels
     private void updateAnalytics() {
     try {
         Connection conn = DatabaseConnection.connect();
 
+        // total parking spots
         PreparedStatement pst1 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots");
         ResultSet rs1 = pst1.executeQuery();
         int totalSpots = rs1.getInt(1);
 
+        // currently occupied spots
         PreparedStatement pst2 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE status='OCCUPIED'");
         ResultSet rs2 = pst2.executeQuery();
         int occupied = rs2.getInt(1);
 
+        // reserved spots count
         PreparedStatement pst3 =
             conn.prepareStatement("SELECT COUNT(*) FROM parking_spots WHERE type='RESERVED'");
         ResultSet rs3 = pst3.executeQuery();
@@ -241,6 +257,7 @@ public class AnalyticsPanel extends JPanel {
         int available = totalSpots - occupied;
         double utilization = (totalSpots > 0) ? (occupied * 100.0) / totalSpots : 0;
 
+        // revenue filtered to today only
         String dateFilter = "WHERE date(exit_time) = date('now')";
 
         PreparedStatement pst4 =
@@ -258,11 +275,13 @@ public class AnalyticsPanel extends JPanel {
         double fines = rs4.getDouble(2);
         double totalRevenue = rs4.getDouble(3);
 
+        // get active fine scheme name from DB
         String currentStrategyLabel = new AdminSettingsDAO().getCurrentStrategy();
         String displayStrategy = "Fixed Fine Scheme";
         if("HOURLY".equalsIgnoreCase(currentStrategyLabel)) displayStrategy = "Hourly Fine Scheme";
         if("PROGRESSIVE".equalsIgnoreCase(currentStrategyLabel)) displayStrategy = "Progressive Fine Scheme";
 
+        // update UI labels
         totalSpotsLbl.setText("Total Spots: " + totalSpots);
         occupiedLbl.setText("Occupied: " + occupied);
         availableLbl.setText("Available: " + available);

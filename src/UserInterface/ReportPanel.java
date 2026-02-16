@@ -23,13 +23,16 @@ public class ReportPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(ThemeColors.PRIMARY);
 
+        // top filter bar
         add(createTopBar(), BorderLayout.NORTH);
 
+        // area where the selected report table will be shown
         tableArea = new JPanel(new BorderLayout());
         tableArea.setBackground(ThemeColors.PRIMARY);
         tableArea.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
         add(tableArea, BorderLayout.CENTER);
 
+        // default report
         loadTable("Parked Vehicles");
     }
 
@@ -42,6 +45,7 @@ public class ReportPanel extends JPanel {
         typeLbl.setForeground(ThemeColors.SECONDARY);
         typeLbl.setFont(new Font("Arial", Font.BOLD, 15));
 
+        // dropdown to switch between report types
         reportTypeDropdown = new JComboBox<>(new String[]{
                 "Parked Vehicles",
                 "Revenue",
@@ -61,6 +65,7 @@ public class ReportPanel extends JPanel {
 
         toDateField = new JTextField(10);
 
+        // applies date filter
         filterBtn = new RoundedButton("Filter", ThemeColors.SECONDARY);
         filterBtn.setForeground(ThemeColors.PRIMARY);
         filterBtn.setPreferredSize(new Dimension(90,32));
@@ -69,6 +74,7 @@ public class ReportPanel extends JPanel {
             loadTable((String) reportTypeDropdown.getSelectedItem())
         );
 
+        // reload table when report type changes
         reportTypeDropdown.addActionListener(e ->
             loadTable((String) reportTypeDropdown.getSelectedItem())
         );
@@ -84,6 +90,7 @@ public class ReportPanel extends JPanel {
         return top;
     }
 
+    // decides which report to build
     private void loadTable(String type) {
 
         tableArea.removeAll();
@@ -101,6 +108,7 @@ public class ReportPanel extends JPanel {
         tableArea.repaint();
     }
 
+    // builds SQL WHERE clause based on date range
     private String getDateFilter(String column){
         String from = fromDateField.getText().trim();
         String to = toDateField.getText().trim();
@@ -111,6 +119,7 @@ public class ReportPanel extends JPanel {
         return " WHERE date(" + column + ") BETWEEN '" + from + "' AND '" + to + "' ";
     }
 
+    // parked vehicles report including active and history
     private void buildVehiclesTable() {
 
         String[] cols = {
@@ -125,6 +134,7 @@ public class ReportPanel extends JPanel {
         try {
             Connection conn = DatabaseConnection.connect();
 
+            // active tickets
             String activeSql =
                 "SELECT plate_num, entry_time FROM tickets WHERE status='ACTIVE'" +
                 getDateFilter("entry_time");
@@ -148,6 +158,7 @@ public class ReportPanel extends JPanel {
             rs1.close();
             pst1.close();
 
+            // past completed tickets
             String historySql =
                 "SELECT plate_num, entry_time, exit_time FROM receipts" +
                 getDateFilter("entry_time");
@@ -180,6 +191,7 @@ public class ReportPanel extends JPanel {
         createStretchTable();
     }
 
+    // revenue report from receipts table
     private void buildRevenueTable() {
 
         String[] cols = {
@@ -232,6 +244,7 @@ public class ReportPanel extends JPanel {
         createStretchTable();
     }
 
+    // occupancy summary 
     private void buildOccupancyTable() {
 
         String[] cols = {
@@ -247,11 +260,13 @@ public class ReportPanel extends JPanel {
         try {
             Connection conn = DatabaseConnection.connect();
 
+            // total capacity
             String capSql = "SELECT COUNT(*) AS total FROM parking_spots";
             PreparedStatement capStmt = conn.prepareStatement(capSql);
             ResultSet capRs = capStmt.executeQuery();
             int capacity = capRs.getInt("total");
 
+            // current occupied count
             String occSql = "SELECT COUNT(*) AS occ FROM parking_spots WHERE status='OCCUPIED'";
             PreparedStatement occStmt = conn.prepareStatement(occSql);
             ResultSet occRs = occStmt.executeQuery();
@@ -279,6 +294,7 @@ public class ReportPanel extends JPanel {
         createStretchTable();
     }
 
+    // fines report with date filtering
     private void buildFinesTable() {
 
         String[] cols = {
@@ -321,6 +337,7 @@ public class ReportPanel extends JPanel {
         createStretchTable();
     }
 
+    // creates the styled table UI container
     private void createStretchTable() {
 
         table = new JTable(model);
@@ -330,6 +347,7 @@ public class ReportPanel extends JPanel {
         table.setBackground(Color.WHITE);
         table.setGridColor(new Color(230,230,230));
 
+        // center align all cells
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(JLabel.CENTER);
         for(int i=0;i<table.getColumnCount();i++)

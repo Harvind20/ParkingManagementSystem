@@ -28,11 +28,13 @@ public class SpotSelectionUI extends JFrame {
     public boolean handicapEnabled = false;
     public boolean vipEnabled = true;
 
+    // holds currently selected spot panel reference
     JPanel[] selectedSpotHolder = new JPanel[1];
 
     private int rowCounter = 1;
     int currentFloor = 1;
 
+    // vehicle passed from entry screen
     public Vehicle currentVehicle; 
 
     public SpotSelectionUI(Vehicle v) {
@@ -44,6 +46,7 @@ public class SpotSelectionUI extends JFrame {
         initUI();
     }
 
+    // builds the entire UI layout and components
     private void initUI() {
 
         setTitle("Select Parking Spot");
@@ -72,11 +75,13 @@ public class SpotSelectionUI extends JFrame {
         floorWrapper.add(floorDropdown);
         background.add(floorWrapper);
 
+        // return to entry page
         returnBtn.addActionListener(e -> {
             new EntryPageUI().setVisible(true);
             dispose();
         });
 
+        // change floor and reload spot grid
         floorDropdown.addActionListener(e -> {
             String selected = (String) floorDropdown.getSelectedItem();
 
@@ -91,25 +96,22 @@ public class SpotSelectionUI extends JFrame {
             }
             
             updateFloorVisuals(currentFloor);
-            // 1. Remove old blocks
+
             background.remove(topBlock);
             background.remove(bottomBlock);
             
-            // 2. Reset Row Counter (Rows are 1-4 on every floor)
+            // reset row numbering for new floor
             rowCounter = 1; 
             
-            // 3. Create new blocks with fresh DB data
+            // rebuild grid from DB
             topBlock = createRowBlock();
             bottomBlock = createRowBlock();
             
-            // 4. Add back to panel
             background.add(topBlock);
             background.add(bottomBlock);
             
-            // 5. Re-apply layout coordinates
             updateLayoutPositions();
             
-            // 6. Refresh screen
             background.revalidate();
             background.repaint();
         });
@@ -119,6 +121,7 @@ public class SpotSelectionUI extends JFrame {
         background.add(topBlock);
         background.add(bottomBlock);
 
+        // legend explaining spot colors
         legendOccupied = createLegendBox(Color.RED, "Occupied");
         legendRegular = createLegendBox(new Color(0,180,90), "Regular");
         legendCompact = createLegendBox(new Color(30,100,20), "Compact");
@@ -131,6 +134,7 @@ public class SpotSelectionUI extends JFrame {
         background.add(legendVIP);
         background.add(legendHandicap);
 
+        // directional labels
         upFrom2nd = createSign("UP from 2nd Floor",170,70);
         entry = createSign("ENTRY",130,60);
         exit = createSign("EXIT",130,60);
@@ -145,6 +149,7 @@ public class SpotSelectionUI extends JFrame {
         background.add(up);
         background.add(down);
 
+        // arrow indicators
         downTopLeft = createArrow("↓",40);
         downLeftTopBlock = createArrow("↓",40);
         downLeftBottomBlock = createArrow("↓",40);
@@ -175,9 +180,10 @@ public class SpotSelectionUI extends JFrame {
         background.add(arrowUp);
         background.add(arrowDown);
 
-        // Initial Visuals for Floor 1
+        // default visuals for first floor
         updateFloorVisuals(1);
 
+        // redo layout components when window resizes
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 updateLayoutPositions();
@@ -187,6 +193,7 @@ public class SpotSelectionUI extends JFrame {
         SwingUtilities.invokeLater(this::updateLayoutPositions);
     }
 
+    // dynamically positions all components based on screen size
     private void updateLayoutPositions(){
 
         int panelW = background.getWidth();
@@ -240,6 +247,7 @@ public class SpotSelectionUI extends JFrame {
         arrowDown.setLocation(panelW - 105, panelH - 135);
     }
 
+    // updates labels depending on selected floor
     private void updateFloorVisuals(int floor){
         upFrom2nd.removeAll();
         entry.removeAll();
@@ -279,6 +287,7 @@ public class SpotSelectionUI extends JFrame {
         entry.revalidate();
     }
 
+    // creates a block containing two rows of parking spots
     private JPanel createRowBlock(){
         RoundedPanel block = new RoundedPanel(40);
         block.setLayout(new GridLayout(2,1,0,0));
@@ -344,9 +353,5 @@ public class SpotSelectionUI extends JFrame {
         arrow.setFont(new Font("Arial",Font.BOLD,size));
         arrow.setSize(size+20,size+20);
         return arrow;
-    }
-
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> new SpotSelectionUI().setVisible(true));
     }
 }

@@ -28,6 +28,7 @@ public class ParkedVehiclesPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(ThemeColors.PRIMARY);
 
+        // always show vehicles for the current day
         currentDate = LocalDate.now();
 
         add(createTopBar(), BorderLayout.NORTH);
@@ -38,6 +39,7 @@ public class ParkedVehiclesPanel extends JPanel {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topPanel.setBackground(ThemeColors.PRIMARY);
 
+        // displays today's date
         dateLabel = new JLabel();
         dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         dateLabel.setForeground(Color.WHITE);
@@ -68,6 +70,8 @@ public class ParkedVehiclesPanel extends JPanel {
         table = new JTable(tableModel);
 
         styleTable();
+
+        // pull today's parked vehicle data from DB
         loadDataFromDB();
 
         JScrollPane scrollPane = new JScrollPane(table);
@@ -96,6 +100,7 @@ public class ParkedVehiclesPanel extends JPanel {
         table.setGridColor(new Color(230, 230, 230));
         table.setSelectionBackground(new Color(210, 235, 255));
 
+        // center align all columns
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(JLabel.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
@@ -108,6 +113,7 @@ public class ParkedVehiclesPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setPreferredSize(new Dimension(header.getWidth(), 40));
 
+        // zebra striping effect for better readability
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                            boolean isSelected, boolean hasFocus,
@@ -136,18 +142,20 @@ public class ParkedVehiclesPanel extends JPanel {
     private void loadDataFromDB() {
         tableModel.setRowCount(0);
 
+        // query for vehicles that are still parked 
         String sqlActive = "SELECT t.plate_num, t.entry_time, s.spot_id, s.type " +
                            "FROM tickets t " +
                            "LEFT JOIN parking_spots s ON t.plate_num = s.plate_num " +
                            "WHERE t.status = 'ACTIVE'";
 
+        // query for vehicles that already exited 
         String sqlHistory = "SELECT r.plate_num, r.entry_time, r.exit_time, r.spot_id, s.type " +
                             "FROM receipts r " +
                             "LEFT JOIN parking_spots s ON r.spot_id = s.spot_id";
 
         try (Connection conn = DatabaseConnection.connect()) {
             
-            // 1. Process ACTIVE Vehicles
+            // process active vehicles
             PreparedStatement pstActive = conn.prepareStatement(sqlActive);
             ResultSet rsActive = pstActive.executeQuery();
 
@@ -156,6 +164,7 @@ public class ParkedVehiclesPanel extends JPanel {
                 try {
                     LocalDateTime entry = LocalDateTime.parse(entryStr, dbTicketFormatter);
                     
+                    // only show rows for today
                     if (entry.toLocalDate().equals(currentDate)) {
                         String spotId = rsActive.getString("spot_id");
                         String type = rsActive.getString("type");
@@ -164,7 +173,7 @@ public class ParkedVehiclesPanel extends JPanel {
                             rsActive.getString("plate_num"),
                             entry.format(displayDateFormatter),
                             entry.format(displayTimeFormatter),
-                            "—", // Still Parked
+                            "—", // still parked
                             (spotId != null ? spotId : "Unknown"),
                             (type != null ? type : "Regular")
                         });
@@ -176,6 +185,7 @@ public class ParkedVehiclesPanel extends JPanel {
             rsActive.close();
             pstActive.close();
 
+            // process exited vehicles from receipts
             PreparedStatement pstHist = conn.prepareStatement(sqlHistory);
             ResultSet rsHist = pstHist.executeQuery();
 
@@ -187,6 +197,7 @@ public class ParkedVehiclesPanel extends JPanel {
                     LocalDateTime entry = LocalDateTime.parse(entryStr);
                     LocalDateTime exit = LocalDateTime.parse(exitStr);
 
+                    // only include today's records
                     if (entry.toLocalDate().equals(currentDate)) {
                         String type = rsHist.getString("type");
                         if (type == null) type = "Unknown";

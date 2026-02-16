@@ -16,6 +16,7 @@ public class ConfirmSchemeChangeDialog extends JDialog {
         setLayout(new GridBagLayout());
         getContentPane().setBackground(ThemeColors.PRIMARY);
 
+        // main card container for dialog content
         RoundedPanel card = new RoundedPanel(30);
         card.setBackground(ThemeColors.SECONDARY);
         card.setPreferredSize(new Dimension(560, 250));
@@ -31,6 +32,7 @@ public class ConfirmSchemeChangeDialog extends JDialog {
         card.add(centerText("You are about to change the fine calculation policy.", 13, false));
         card.add(Box.createVerticalStrut(12));
 
+        // shows the selected scheme name
         JLabel scheme = centerText("New Scheme: " + schemeName, 14, true);
         card.add(scheme);
 
@@ -48,6 +50,7 @@ public class ConfirmSchemeChangeDialog extends JDialog {
         confirm.setPreferredSize(new Dimension(140, 45));
         cancel.setPreferredSize(new Dimension(140, 45));
 
+        // determine which scheme was chosen and update DB 
         confirm.addActionListener(e -> {
             String dbValue = "FIXED";
             FineScheme strategyObj = new FixedFine();
@@ -60,14 +63,17 @@ public class ConfirmSchemeChangeDialog extends JDialog {
                 strategyObj = new ProgressiveFine();
             }
 
+            // save selected scheme into database
             new AdminSettingsDAO().setStrategy(dbValue);
 
+            // update the active fine calculation strategy in runtime
             FineManager.setFineScheme(strategyObj);
 
             dispose();
             JOptionPane.showMessageDialog(parent, "Fine Strategy Updated Successfully!");
         });
 
+        // close dialog without making changes
         cancel.addActionListener(e -> dispose());
 
         btnRow.add(confirm);
@@ -76,6 +82,7 @@ public class ConfirmSchemeChangeDialog extends JDialog {
         card.add(btnRow);
     }
 
+    // helper method to create centered labels with consistent styling
     private JLabel centerText(String text, int size, boolean bold) {
         JLabel l = new JLabel(text, SwingConstants.CENTER);
         l.setAlignmentX(Component.CENTER_ALIGNMENT);

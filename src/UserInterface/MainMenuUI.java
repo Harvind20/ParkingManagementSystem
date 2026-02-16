@@ -12,32 +12,28 @@ public class MainMenuUI extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        // open main menu in fullscreen
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // Theme colors
-        Color DARK = new Color(0x02,0x34,0x3F);
-        Color CREAM = new Color(0xF0,0xED,0xCC);
-
-        // Background panel
+        // Background panel 
         JPanel background = new JPanel();
-        background.setBackground(DARK);
+        background.setBackground(ThemeColors.PRIMARY);
         background.setLayout(new GridBagLayout());
 
-        // Rounded box panel 
         RoundedPanel box = new RoundedPanel(30);
         box.setPreferredSize(new Dimension(240, 340));
-        box.setBackground(CREAM);
+        box.setBackground(ThemeColors.SECONDARY);
         box.setLayout(new GridLayout(3, 1, 15, 25));
         box.setBorder(BorderFactory.createEmptyBorder(40, 30, 40, 30));
 
-        // Buttons 
-        JButton entryBtn = new RoundedButton("Entry", DARK);
-        JButton exitBtn = new RoundedButton("Exit", DARK);
-        JButton adminBtn = new RoundedButton("Admin", DARK);
+        // Navigation buttons
+        JButton entryBtn = new RoundedButton("Entry", ThemeColors.PRIMARY);
+        JButton exitBtn = new RoundedButton("Exit", ThemeColors.PRIMARY);
+        JButton adminBtn = new RoundedButton("Admin", ThemeColors.PRIMARY);
 
-        entryBtn.setForeground(CREAM);
-        exitBtn.setForeground(CREAM);
-        adminBtn.setForeground(CREAM);
+        entryBtn.setForeground(ThemeColors.SECONDARY);
+        exitBtn.setForeground(ThemeColors.SECONDARY);
+        adminBtn.setForeground(ThemeColors.SECONDARY);
 
         box.add(entryBtn);
         box.add(exitBtn);
@@ -46,21 +42,19 @@ public class MainMenuUI extends JFrame {
         background.add(box);
         add(background);
 
-        // --- FUNCTIONALITY CONNECTIONS ---
-
-        // 1. Entry Module
+        // opens vehicle entry screen
         entryBtn.addActionListener(e -> {
             new EntryPageUI().setVisible(true);
             dispose();
         });
 
-        // 2. Exit Module
+        // opens vehicle exit screen
         exitBtn.addActionListener(e -> {
              new ExitPageUI().setVisible(true); 
              dispose();
         });
 
-        // 3. Admin Module
+        // opens admin dashboard
         adminBtn.addActionListener(e -> {
             new AdminDashboardUI().setVisible(true);
             dispose();

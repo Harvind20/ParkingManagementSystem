@@ -9,12 +9,16 @@ import javax.swing.border.EmptyBorder;
 
 public class PaymentPageUI extends JFrame {
 
+    // data passed from ExitPageUI containing fee and fine details
     private PendingExit pendingExit;
+
+    // values used to track what the user chooses to pay
     private double selectedTotal = 0.0;
     private double fineAmountToPay = 0.0;
     private double parkingFee = 0.0;
     private double totalFines = 0.0;
 
+    // UI labels that get updated dynamically
     private JLabel feeOnlyAmount;
     private JLabel fullTotal;
     private JRadioButton full;
@@ -32,12 +36,14 @@ public class PaymentPageUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        // open page in fullscreen
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         JPanel background = new JPanel(new GridBagLayout());
         background.setBackground(new Color(2,52,63));
         add(background);
 
+        // main card holding all payment UI
         RoundedPanel mainCard = new RoundedPanel(30);
         mainCard.setBackground(new Color(240,237,204));
         mainCard.setPreferredSize(new Dimension(780,660));
@@ -45,6 +51,7 @@ public class PaymentPageUI extends JFrame {
         mainCard.setBorder(new EmptyBorder(25,40,25,40));
         background.add(mainCard);
 
+        // payment method section cash/card
         RoundedPanel methodBox = createBox();
         methodBox.add(centerHeader("Payment Method"));
 
@@ -53,6 +60,7 @@ public class PaymentPageUI extends JFrame {
         methodDropdown.setMaximumSize(new Dimension(180,32));
         methodDropdown.setFont(new Font("Arial", Font.BOLD, 13));
 
+        // cash input area which is only visible when cash is selected
         JPanel cashPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         cashPanel.setOpaque(false);
         JLabel cashLabel = new JLabel("Enter Cash Amount: RM ");
@@ -73,15 +81,18 @@ public class PaymentPageUI extends JFrame {
         mainCard.add(methodBox);
         mainCard.add(Box.createVerticalStrut(15));
 
+        // load fee and fine values from backend data
         parkingFee = (pendingExit != null) ? pendingExit.getParkingFee() : 5.0;
         totalFines = (pendingExit != null) ? pendingExit.getCurrentFines() + pendingExit.getUnpaidFines() : 50.0;
         double totalAll = parkingFee + totalFines;
 
+        // block partial payment if fines too high
         boolean isBlocked = totalFines >= 500.0;
 
         selectedTotal = totalAll;
         fineAmountToPay = totalFines;
 
+        // option 1 is pay ticket fee only
         RoundedPanel feeBox = createBox();
 
         feeOnly = new JRadioButton("Pay Ticket Fee Only");
@@ -100,6 +111,7 @@ public class PaymentPageUI extends JFrame {
         mainCard.add(feeBox);
         mainCard.add(Box.createVerticalStrut(12));
 
+        // option 2 is pay full amount including fines
         RoundedPanel fullBox = createBox();
 
         full = new JRadioButton("Ticket Fee + Pay All Outstanding Fines");
@@ -117,6 +129,7 @@ public class PaymentPageUI extends JFrame {
         amountGroup.add(feeOnly);
         amountGroup.add(full);
 
+        // update values based on user selection
         feeOnly.addActionListener(e -> {
             selectedTotal = parkingFee;
             fineAmountToPay = 0.0;
@@ -127,6 +140,7 @@ public class PaymentPageUI extends JFrame {
             fineAmountToPay = totalFines;
         });
 
+        // confirm / cancel buttons
         JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER,25,0));
         btnRow.setOpaque(false);
 
@@ -135,6 +149,7 @@ public class PaymentPageUI extends JFrame {
         confirm.setPreferredSize(new Dimension(150,48));
         cancel.setPreferredSize(new Dimension(150,48));
 
+        // handle payment confirmation
         confirm.addActionListener(e -> {
             if (pendingExit == null) return;
 
@@ -143,6 +158,7 @@ public class PaymentPageUI extends JFrame {
             
             double parkingAmountToSend = pendingExit.getParkingFee();
 
+            // validate cash input if cash selected
             if (methodDropdown.getSelectedItem().equals("Cash")) {
                 try {
                     String cashText = cashInput.getText().trim();
@@ -154,6 +170,7 @@ public class PaymentPageUI extends JFrame {
                         return;
                     }
                     
+                    // calculate amount to record as parking payment 
                     parkingAmountToSend = cashGiven - fineAmountToPay;
 
                 } catch (NumberFormatException ex) {
@@ -165,6 +182,7 @@ public class PaymentPageUI extends JFrame {
             ExitSystem exitSystem = new ExitSystem();
             String method = methodDropdown.getSelectedItem().equals("Cash") ? "CASH" : "CARD";
 
+            // send payment to backend
             Receipt receipt = exitSystem.confirmExit(
                 pendingExit.getLicensePlate(),
                 parkingAmountToSend,
@@ -172,10 +190,12 @@ public class PaymentPageUI extends JFrame {
                 method
             );
 
+            // success does show receipt
             if (receipt != null) {
                 new ReceiptPageUI(receipt).setVisible(true);
                 dispose();
             } else {
+                // recheck if fees changed due to time threshold
                 double newFee = pendingExit.getParkingFee();
                 double newFines = pendingExit.getCurrentFines();
 
@@ -194,6 +214,7 @@ public class PaymentPageUI extends JFrame {
                     selectedTotal = parkingFee + totalFines;
                     fineAmountToPay = totalFines;
                     
+                    // block fee only if fines now exceed threshold
                     if (this.totalFines >= 500.0) {
                         feeOnly.setEnabled(false);
                         feeOnly.setText("Pay Ticket Fee Only (Blocked: Fines > RM500)");
@@ -206,6 +227,7 @@ public class PaymentPageUI extends JFrame {
             }
         });
 
+        // cancel goes back to main menu
         cancel.addActionListener(e -> {
             new MainMenuUI().setVisible(true);
             dispose();
@@ -216,6 +238,7 @@ public class PaymentPageUI extends JFrame {
         mainCard.add(btnRow);
     }
 
+    // helper to create semi-transparent section boxes
     private RoundedPanel createBox(){
         RoundedPanel p = new RoundedPanel(20);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
@@ -240,6 +263,7 @@ public class PaymentPageUI extends JFrame {
         return l;
     }
 
+    // centers any component in a row
     private JPanel centerRow(JComponent comp){
         JPanel row = new JPanel(new FlowLayout(FlowLayout.CENTER));
         row.setOpaque(false);
@@ -247,13 +271,10 @@ public class PaymentPageUI extends JFrame {
         return row;
     }
 
+    // consistent styling for radio buttons
     private void styleRadio(JRadioButton r){
         r.setForeground(new Color(2,52,63));
         r.setOpaque(false);
         r.setFont(new Font("Arial", Font.BOLD, 13));
-    }
-
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> new PaymentPageUI().setVisible(true));
     }
 }
