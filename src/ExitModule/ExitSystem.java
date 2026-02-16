@@ -3,12 +3,16 @@ package ExitModule;
 import EntryModule.Ticket;
 import FineModule.FineManager;
 import FineModule.FineScheme;
+import coreParkingSystem.DatabaseConnection;
 import coreParkingSystem.FineDAO;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.ParkingSpotDAO;
 import coreParkingSystem.ReceiptDAO;
 import coreParkingSystem.VehicleDAO;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -66,8 +70,9 @@ public class ExitSystem {
         double parkingFee = feeCalculator.calculateParkingFee(
             entryTime, initiationTime, spotTypeString, ticket.getVehicleType()
         );
+
+        double currentFines = calculateAllFines(ticket, spot, initiationTime, licensePlate);
         
-        double currentFines = calculateFines(ticket, initiationTime);
         double unpaidFines = vehicleDAO.getAccumulatedFines(licensePlate);
         double totalFines = currentFines + unpaidFines;
         double totalDue = parkingFee + totalFines;
@@ -107,7 +112,8 @@ public class ExitSystem {
             spotTypeString, ticket.getVehicleType()
         );
         
-        double currentFines = calculateFines(ticket, confirmationTime);
+        double currentFines = calculateAllFines(ticket, spot, confirmationTime, licensePlate);
+        
         double unpaidFines = vehicleDAO.getAccumulatedFines(licensePlate);
         double currentTotalDue = currentParkingFee + currentFines + unpaidFines;
         
@@ -185,7 +191,7 @@ public class ExitSystem {
         } else {
             double currentNewFine = pending.getCurrentFines();
             if (currentNewFine > 0) {
-                 fineDAO.createFine(licensePlate, currentNewFine, "Overstay/Violation");
+                 fineDAO.createFine(licensePlate, currentNewFine, "Exit Fine (Overstay/Violation)");
             }
         }
         
@@ -242,10 +248,50 @@ public class ExitSystem {
         return entryTime.plusMinutes(hoursParked * 60);
     }
 
-    private double calculateFines(Ticket ticket, LocalDateTime exitTime) {
+    private double calculateAllFines(Ticket ticket, ParkingSpot spot, LocalDateTime exitTime, String plate) {
+        String schemeName = ticket.getFineSchemeAtEntry();
+        FineScheme scheme = FineManager.getSchemeByName(schemeName);
+
         double hoursParked = calculateHoursParked(ticket.getEntryTime(), exitTime);
-        if (hoursParked <= 24) return 0.0;
-        return fineManager.calculateFine((int) hoursParked);
+        int hoursInt = (int) hoursParked;
+        
+        double totalFine = 0.0;
+
+        totalFine += fineManager.calculateFine(scheme, hoursInt, false);
+
+        boolean isViolation = false;
+        
+        if (spot != null) {
+            boolean isVip = getVipStatus(plate);
+            
+            if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !isVip) {
+                isViolation = true;
+            }
+            if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) {
+                isViolation = true;
+            }
+        }
+
+        if (isViolation) {
+            totalFine += fineManager.calculateFine(scheme, hoursInt, true);
+        }
+
+        return totalFine;
+    }
+    
+    private boolean getVipStatus(String plate) {
+        String sql = "SELECT is_vip FROM vehicles WHERE plate_num = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getBoolean("is_vip");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private double calculateHoursParked(LocalDateTime entryTime, LocalDateTime exitTime) {

@@ -11,12 +11,14 @@ public class Ticket {
     private String vehicleType;
     private LocalDateTime entryTime;
     private int sequenceNumber;
+    private String fineSchemeAtEntry;
 
     private Ticket(TicketBuilder builder) {
         this.licensePlate = builder.licensePlate;
         this.vehicleType = builder.vehicleType;
         this.entryTime = builder.entryTime;
         this.sequenceNumber = builder.sequenceNumber;
+        this.fineSchemeAtEntry = builder.fineSchemeAtEntry;
         this.ticketID = generateID();
     }
 
@@ -26,6 +28,7 @@ public class Ticket {
         this.vehicleType = vType;
         this.entryTime = time;
         this.sequenceNumber = seq;
+        this.fineSchemeAtEntry = "FIXED";
         this.ticketID = generateID();
     }
 
@@ -39,6 +42,7 @@ public class Ticket {
     public String getVehicleType() { return vehicleType; }
     public LocalDateTime getEntryTime() { return entryTime; }
     public int getSequenceNumber() { return sequenceNumber; }
+    public String getFineSchemeAtEntry() { return fineSchemeAtEntry; }
 
     public void setTicketID(String id) { this.ticketID = id; }
 
@@ -51,7 +55,8 @@ public class Ticket {
         private String licensePlate;
         private String vehicleType = "Car";
         private LocalDateTime entryTime;
-        private int sequenceNumber = 1; // Default to 1
+        private int sequenceNumber = 1;
+        private String fineSchemeAtEntry = "FIXED";
 
         public TicketBuilder addPlate(String plate) {
             this.licensePlate = plate;
@@ -60,6 +65,11 @@ public class Ticket {
 
         public TicketBuilder addVehicleType(String type) {
             this.vehicleType = type;
+            return this;
+        }
+        
+        public TicketBuilder addFineScheme(String scheme) {
+            this.fineSchemeAtEntry = scheme;
             return this;
         }
 
