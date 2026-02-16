@@ -1,7 +1,9 @@
 package EntryModule;
 
 import FineModule.FineManager;
+import FineModule.FineScheme;
 import UserInterface.ParkingTicketUI;
+import coreParkingSystem.FineDAO;
 import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
@@ -46,12 +48,12 @@ public class EntryController {
         if (!isEntryAllowed(vehicle, type)) {
              if (vehicle instanceof SUV && type == ParkingSpot.Type.COMPACT) 
                  return "ERROR: SUV cannot park in Compact spot";
+
              return "ERROR: Vehicle type not allowed in this spot";
         }
 
         lot.saveVehicle(vehicle);
 
-        // Determine Current Fine Scheme Name
         String currentSchemeName = "FIXED";
         if (FineManager.getCurrentScheme() instanceof FineModule.HourlyFine) {
             currentSchemeName = "HOURLY";
@@ -59,7 +61,6 @@ public class EntryController {
             currentSchemeName = "PROGRESSIVE";
         }
 
-        // Create Ticket with the captured Scheme
         Ticket ticket = new Ticket.TicketBuilder()
             .addPlate(vehicle.getLicensePlate())
             .addTime(vehicle.getEntryTime())
@@ -69,13 +70,15 @@ public class EntryController {
             .build();
         
         vehicle.setTicketId(ticket.toString());
-
         lot.saveTicket(ticket);
 
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
         ParkingSpot spot = lot.getSpotById(selectedSpotID);
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
+
+        checkAndIssueViolationFine(vehicle, spot, currentSchemeName);
+
         vehicleDAO.syncTotalFines(vehicle.getLicensePlate());
 
         SwingUtilities.invokeLater(() -> 
@@ -87,8 +90,34 @@ public class EntryController {
 
     private boolean isEntryAllowed(Vehicle v, ParkingSpot.Type spotType) {
         if (v instanceof HandicappedVehicle) return true;
-        // Block SUVs from Compact spots (physical constraint)
+        // Strict Block: SUV in Compact
         if (v instanceof SUV && spotType == ParkingSpot.Type.COMPACT) return false;
         return true; 
+    }
+
+    private void checkAndIssueViolationFine(Vehicle vehicle, ParkingSpot spot, String schemeName) {
+        boolean isViolation = false;
+        String reason = "";
+
+        if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
+            isViolation = true;
+            reason = "Violation: Non-VIP in Reserved Spot";
+        } 
+        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
+            isViolation = true;
+            reason = "Violation: Unauthorized in Handicap Spot";
+        }
+
+        if (isViolation) {
+            FineManager fm = new FineManager();
+            FineScheme scheme = FineManager.getSchemeByName(schemeName);
+            double initialFine = fm.calculateFine(scheme, 1, true); 
+            
+            if (initialFine > 0) {
+                FineDAO fineDAO = new FineDAO();
+                fineDAO.createFine(vehicle.getLicensePlate(), initialFine, reason);
+                System.out.println("Immediate Violation Fine Issued: RM " + initialFine);
+            }
+        }
     }
 }
