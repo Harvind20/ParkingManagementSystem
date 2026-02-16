@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -19,8 +20,9 @@ public class ParkedVehiclesPanel extends JPanel {
     private JLabel dateLabel;
     private JTable table;
     private DefaultTableModel tableModel;
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-    private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+    private DateTimeFormatter displayDateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private DateTimeFormatter displayTimeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+    private DateTimeFormatter dbTicketFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm:ss"); 
 
     public ParkedVehiclesPanel() {
         setLayout(new BorderLayout());
@@ -128,60 +130,82 @@ public class ParkedVehiclesPanel extends JPanel {
     }
 
     private void updateDateLabel() {
-        dateLabel.setText(currentDate.format(formatter));
+        dateLabel.setText(currentDate.format(displayDateFormatter));
     }
 
     private void loadDataFromDB() {
-        String targetDate = LocalDate.now().toString();
+        tableModel.setRowCount(0);
 
         String sqlActive = "SELECT t.plate_num, t.entry_time, s.spot_id, s.type " +
                            "FROM tickets t " +
-                           "JOIN parking_spots s ON t.plate_num = s.plate_num " +
-                           "WHERE t.status = 'ACTIVE' AND date(t.entry_time) = ?";
+                           "LEFT JOIN parking_spots s ON t.plate_num = s.plate_num " +
+                           "WHERE t.status = 'ACTIVE'";
 
         String sqlHistory = "SELECT r.plate_num, r.entry_time, r.exit_time, r.spot_id, s.type " +
                             "FROM receipts r " +
-                            "LEFT JOIN parking_spots s ON r.spot_id = s.spot_id " +
-                            "WHERE date(r.entry_time) = ?";
+                            "LEFT JOIN parking_spots s ON r.spot_id = s.spot_id";
 
         try (Connection conn = DatabaseConnection.connect()) {
             
+            // 1. Process ACTIVE Vehicles
             PreparedStatement pstActive = conn.prepareStatement(sqlActive);
-            pstActive.setString(1, targetDate);
             ResultSet rsActive = pstActive.executeQuery();
 
             while (rsActive.next()) {
-                LocalDateTime entry = LocalDateTime.parse(rsActive.getString("entry_time"));
-                
-                tableModel.addRow(new Object[]{
-                    rsActive.getString("plate_num"),
-                    entry.format(formatter),
-                    entry.format(timeFormatter),
-                    "—",
-                    rsActive.getString("spot_id"),
-                    rsActive.getString("type")
-                });
+                String entryStr = rsActive.getString("entry_time");
+                try {
+                    LocalDateTime entry = LocalDateTime.parse(entryStr, dbTicketFormatter);
+                    
+                    if (entry.toLocalDate().equals(currentDate)) {
+                        String spotId = rsActive.getString("spot_id");
+                        String type = rsActive.getString("type");
+                        
+                        tableModel.addRow(new Object[]{
+                            rsActive.getString("plate_num"),
+                            entry.format(displayDateFormatter),
+                            entry.format(displayTimeFormatter),
+                            "—", // Still Parked
+                            (spotId != null ? spotId : "Unknown"),
+                            (type != null ? type : "Regular")
+                        });
+                    }
+                } catch (DateTimeParseException e) {
+                    System.err.println("Skipping active row due to date format error: " + entryStr);
+                }
             }
+            rsActive.close();
+            pstActive.close();
 
             PreparedStatement pstHist = conn.prepareStatement(sqlHistory);
-            pstHist.setString(1, targetDate);
             ResultSet rsHist = pstHist.executeQuery();
 
             while (rsHist.next()) {
-                LocalDateTime entry = LocalDateTime.parse(rsHist.getString("entry_time"));
-                LocalDateTime exit = LocalDateTime.parse(rsHist.getString("exit_time"));
-                String type = rsHist.getString("type");
-                if (type == null) type = "Unknown";
+                String entryStr = rsHist.getString("entry_time");
+                String exitStr = rsHist.getString("exit_time");
+                
+                try {
+                    LocalDateTime entry = LocalDateTime.parse(entryStr);
+                    LocalDateTime exit = LocalDateTime.parse(exitStr);
 
-                tableModel.addRow(new Object[]{
-                    rsHist.getString("plate_num"),
-                    entry.format(formatter),
-                    entry.format(timeFormatter),
-                    exit.format(timeFormatter),
-                    rsHist.getString("spot_id"),
-                    type
-                });
+                    if (entry.toLocalDate().equals(currentDate)) {
+                        String type = rsHist.getString("type");
+                        if (type == null) type = "Unknown";
+
+                        tableModel.addRow(new Object[]{
+                            rsHist.getString("plate_num"),
+                            entry.format(displayDateFormatter),
+                            entry.format(displayTimeFormatter),
+                            exit.format(displayTimeFormatter),
+                            rsHist.getString("spot_id"),
+                            type
+                        });
+                    }
+                } catch (DateTimeParseException e) {
+                   System.err.println("Skipping history row due to date format error: " + entryStr);
+                }
             }
+            rsHist.close();
+            pstHist.close();
 
         } catch (Exception e) {
             e.printStackTrace();
