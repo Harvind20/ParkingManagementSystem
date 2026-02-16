@@ -13,7 +13,6 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
 
     @Override
     public void create(Vehicle vehicle) {
-
         // normalize plate format for consistency in database
         String cleanPlate = vehicle.getLicensePlate().trim().toUpperCase();
         
@@ -45,6 +44,24 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
             System.out.println("Vehicle Create Error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    // NEW METHOD: fetches only the vehicle type string for a given plate
+    public String getVehicleType(String plateNum) {
+        String sql = "SELECT type FROM vehicles WHERE plate_num = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, plateNum.trim().toUpperCase());
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getString("type");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "Car"; // Default fallback
     }
 
     // retrieves the current unpaid fine total for a vehicle
