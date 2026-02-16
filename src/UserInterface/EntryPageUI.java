@@ -79,7 +79,7 @@ public class EntryPageUI extends JFrame {
         l2.setForeground(CREAM);
         l2.setFont(new Font("Arial", Font.BOLD, 14));
         
-        String[] types = {"Car", "SUV", "Motorcycle", "HandicappedVehicle"};
+        String[] types = {"Car", "SUV", "Motorcycle", "Handicapped"};
         JComboBox<String> typeBox = new JComboBox<>(types);
 
         JCheckBox vipCheck = new JCheckBox("VIP Member");
@@ -92,7 +92,7 @@ public class EntryPageUI extends JFrame {
 
         formPanel.add(l1); formPanel.add(plateField);
         formPanel.add(l2); formPanel.add(typeBox);
-        formPanel.add(vipCheck); formPanel.add(handicapCheck);
+        formPanel.add(vipCheck); 
 
         gbc.gridy = 1;
         centerPanel.add(formPanel, gbc);
@@ -105,7 +105,7 @@ public class EntryPageUI extends JFrame {
             String plate = plateField.getText().trim();
             String vType = (String) typeBox.getSelectedItem();
             boolean isVip = vipCheck.isSelected();
-            boolean isHandicap = handicapCheck.isSelected();
+            System.out.println("Dropdown selected: " + vType);
             int specialCharacterCount = 0;
             int numOfDigits = 0;
 
@@ -144,14 +144,13 @@ public class EntryPageUI extends JFrame {
             switch (vType) {
                 case "SUV": vehicle = new SUV(plate); break;
                 case "Motorcycle": vehicle = new Motorcycle(plate); break;
-                case "HandicappedVehicle": vehicle = new HandicappedVehicle(plate); break;
+                case "Handicapped": vehicle = new HandicappedVehicle(plate); break;
                 default: vehicle = new Car(plate);
             }
 
             vehicle.setVip(isVip);
             SpotSelectionUI spotUI = new SpotSelectionUI(vehicle);
             spotUI.vipEnabled = isVip;
-            spotUI.handicapEnabled = isHandicap || (vehicle instanceof HandicappedVehicle);
             
             spotUI.setVisible(true);
             dispose(); 
