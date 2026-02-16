@@ -8,6 +8,7 @@ public class FeeCalculator {
     private static final double RATE_HANDICAPPED = 2.0;
     private static final double RATE_RESERVED = 10.0;
     
+    // Main method used by ExitSystem to compute the final parking fee
     public double calculateParkingFee(LocalDateTime entryTime, LocalDateTime exitTime, 
                                       String spotType, String vehicleType) {
         
@@ -59,32 +60,5 @@ public class FeeCalculator {
             default:
                 return RATE_REGULAR;
         }
-    }
-    
-    public static void main(String[] args) {
-        FeeCalculator calculator = new FeeCalculator();
-        LocalDateTime now = LocalDateTime.now();
-        
-        System.out.println("=== Testing Simplified Fee Calculator ===");
-        
-        double fee = calculator.calculateParkingFee(
-            now.minusHours(3), now, "Handicapped", "Handicapped");
-        System.out.println("1. Handicapped in Handicapped spot (3 hours): RM " + fee);
-        
-        fee = calculator.calculateParkingFee(
-            now.minusHours(3), now, "Regular", "Handicapped");
-        System.out.println("2. Handicapped in Regular spot (3 hours): RM " + fee);
-        
-        fee = calculator.calculateParkingFee(
-            now.minusHours(3), now, "Regular", "Car");
-        System.out.println("3. Regular car in Regular spot (3 hours): RM " + fee);
-
-        fee = calculator.calculateParkingFee(
-            now.minusHours(3),
-            now,
-            "HANDICAP",
-            "Handicapped"
-        );
-        System.out.println("4. Handicapped in HANDICAP spot (3 hours): RM " + fee);
     }
 }
