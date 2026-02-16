@@ -1,15 +1,15 @@
 package UserInterface;
-
+import coreParkingSystem.DatabaseConnection;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.swing.*;
 import javax.swing.table.*;
-import java.awt.*;
 
 public class ReportPanel extends JPanel {
 
     private JComboBox<String> reportTypeDropdown;
-    private JTextField fromDateField;
-    private JTextField toDateField;
-    private RoundedButton filterBtn;
 
     private JPanel tableArea;
     private JTable table;
@@ -50,31 +50,8 @@ public class ReportPanel extends JPanel {
                 loadTable((String) reportTypeDropdown.getSelectedItem())
         );
 
-        JLabel fromLbl = new JLabel("From:");
-        fromLbl.setForeground(ThemeColors.SECONDARY);
-
-        fromDateField = new JTextField(10);
-
-        JLabel toLbl = new JLabel("To:");
-        toLbl.setForeground(ThemeColors.SECONDARY);
-
-        toDateField = new JTextField(10);
-
-        filterBtn = new RoundedButton("Filter", ThemeColors.SECONDARY);
-        filterBtn.setForeground(ThemeColors.PRIMARY);
-        filterBtn.setPreferredSize(new Dimension(90, 32));
-
-        filterBtn.addActionListener(e ->
-                loadTable((String) reportTypeDropdown.getSelectedItem())
-        );
-
         top.add(typeLbl);
         top.add(reportTypeDropdown);
-        top.add(fromLbl);
-        top.add(fromDateField);
-        top.add(toLbl);
-        top.add(toDateField);
-        top.add(filterBtn);
 
         return top;
     }
@@ -96,64 +73,182 @@ public class ReportPanel extends JPanel {
 
     private void buildVehiclesTable() {
 
-        String[] cols = {
-                "Plate",
-                "Date",
-                "Entry Time",
-                "Exit Time",
-                "Spot ID",
-                "Spot Type"
-        };
+    String[] cols = {
+        "Plate",
+        "Date",
+        "Entry Time",
+        "Exit Time"
+    };
 
-        model = new DefaultTableModel(cols,0);
+    model = new DefaultTableModel(cols,0);
 
-        model.addRow(new Object[]{"ABC1234","12-03-2026","10:15 AM","11:30 AM","F1-R1-S1","Regular"});
-        model.addRow(new Object[]{"XYZ9988","12-03-2026","09:05 AM","—","F2-R2-S4","VIP"});
+    try {
+        Connection conn = DatabaseConnection.connect();
 
-        createStretchTable();
+        // ========================
+        // 1) ACTIVE VEHICLES (tickets)
+        // ========================
+        String activeSql =
+            "SELECT plate_num, entry_time FROM tickets WHERE status='ACTIVE'";
+
+        PreparedStatement pst1 = conn.prepareStatement(activeSql);
+        ResultSet rs1 = pst1.executeQuery();
+
+        while(rs1.next()) {
+            String plate = rs1.getString("plate_num");
+            String entry = rs1.getString("entry_time");
+
+            String date = entry.split(" ")[0];
+
+            model.addRow(new Object[]{
+                plate,
+                date,
+                entry,
+                "—"   // still parked
+            });
+        }
+
+        rs1.close();
+        pst1.close();
+
+        // ========================
+        // 2) EXITED VEHICLES (receipts)
+        // ========================
+        String historySql =
+            "SELECT plate_num, entry_time, exit_time FROM receipts";
+
+        PreparedStatement pst2 = conn.prepareStatement(historySql);
+        ResultSet rs2 = pst2.executeQuery();
+
+        while(rs2.next()) {
+            String plate = rs2.getString("plate_num");
+            String entry = rs2.getString("entry_time");
+            String exit = rs2.getString("exit_time");
+
+            String date = entry.split(" ")[0];
+
+            model.addRow(new Object[]{
+                plate,
+                date,
+                entry,
+                exit
+            });
+        }
+
+        rs2.close();
+        pst2.close();
+        conn.close();
+
+    } catch(Exception e) {
+        e.printStackTrace();
     }
+
+    createStretchTable();
+}
+
+
+
 
     private void buildRevenueTable() {
 
-        String[] cols = {
-                "Plate",
-                "Parking Fee",
-                "Fine Paid",
-                "Total Paid",
-                "Payment Method",
-                "Date"
-        };
+    String[] cols = {
+        "Plate",
+        "Parking Fee",
+        "Fine Paid",
+        "Total Paid",
+        "Payment Method",
+        "Date"
+    };
 
-        model = new DefaultTableModel(cols,0);
+    model = new DefaultTableModel(cols,0);
 
-        model.addRow(new Object[]{"ABC1234","RM 5.00","RM 0.00","RM 5.00","Cash","12-03-2026"});
-        model.addRow(new Object[]{"XYZ9988","RM 7.00","RM 50.00","RM 57.00","Card","12-03-2026"});
+    try {
+        Connection conn = DatabaseConnection.connect();
 
-        createStretchTable();
+        String sql = "SELECT plate_num, parking_fee, fine_amount, total_paid, payment_method, entry_time FROM receipts";
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery();
+
+        while(rs.next()) {
+            String plate = rs.getString("plate_num");
+            double fee = rs.getDouble("parking_fee");
+            double fine = rs.getDouble("fine_amount");
+            double total = rs.getDouble("total_paid");
+            String method = rs.getString("payment_method");
+            String date = rs.getString("entry_time").split(" ")[0];
+
+            model.addRow(new Object[]{
+                plate,
+                "RM " + String.format("%.2f", fee),
+                "RM " + String.format("%.2f", fine),
+                "RM " + String.format("%.2f", total),
+                method,
+                date
+            });
+        }
+
+        rs.close();
+        pst.close();
+        conn.close();
+
+    } catch(Exception e) {
+        e.printStackTrace();
     }
+
+    createStretchTable();
+}
+
 
     private void buildOccupancyTable() {
 
-        String[] cols = {
-                "Date",
-                "Vehicles Parked",
-                "Peak Occupancy",
-                "Average Occupancy",
-                "Average Utilization %"
-        };
+    String[] cols = {
+        "Date",
+        "Vehicles Parked",
+        "Peak Occupancy",
+        "Average Occupancy",
+        "Average Utilization %"
+    };
 
-        model = new DefaultTableModel(cols,0);
+    model = new DefaultTableModel(cols,0);
 
-        int capacity = 120;
-        int avg = 72;
-        int peak = 96;
-        double util = (avg * 100.0) / capacity;
+    try {
+        Connection conn = DatabaseConnection.connect();
 
-        model.addRow(new Object[]{"12-03-2026", 110, peak, avg, String.format("%.1f%%",util)});
-        model.addRow(new Object[]{"11-03-2026", 95, 88, 60, "50.0%"});
+        // Total capacity
+        String capSql = "SELECT COUNT(*) AS total FROM parking_spots";
+        PreparedStatement capStmt = conn.prepareStatement(capSql);
+        ResultSet capRs = capStmt.executeQuery();
+        int capacity = capRs.getInt("total");
 
-        createStretchTable();
+        // Active parked vehicles
+        String occSql = "SELECT COUNT(*) AS occ FROM parking_spots WHERE status='OCCUPIED'";
+        PreparedStatement occStmt = conn.prepareStatement(occSql);
+        ResultSet occRs = occStmt.executeQuery();
+        int occupied = occRs.getInt("occ");
+
+        double util = (occupied * 100.0) / capacity;
+
+        String today = java.time.LocalDate.now().toString();
+
+        model.addRow(new Object[]{
+            today,
+            occupied,
+            occupied,     // peak = current for now
+            occupied,     // avg = current for now
+            String.format("%.1f%%", util)
+        });
+
+        capRs.close();
+        occRs.close();
+        conn.close();
+
+    } catch(Exception e) {
+        e.printStackTrace();
     }
+
+    createStretchTable();
+}
+
 
     private void createStretchTable() {
 
