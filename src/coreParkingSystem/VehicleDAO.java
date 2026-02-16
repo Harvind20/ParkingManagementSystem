@@ -8,29 +8,32 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+// DAO that manages vehicle records and their accumulated fines
 public class VehicleDAO implements GenericDAO<Vehicle, String> {
 
     @Override
     public void create(Vehicle vehicle) {
+
+        // normalize plate format for consistency in database
         String cleanPlate = vehicle.getLicensePlate().trim().toUpperCase();
         
-        // 1. Insert if new (Default fines to 0.0)
+        // insert new vehicle if it doesn't exist
         String insertSql = "INSERT OR IGNORE INTO vehicles(plate_num, type, is_vip, accumulated_fines) VALUES(?,?,?,0.0)";
         
-        // 2. Update details (Ensures VIP status changes are saved even if vehicle already exists)
+        // always update details to reflect latest VIP/type status from UI
         String updateSql = "UPDATE vehicles SET is_vip = ?, type = ? WHERE plate_num = ?";
 
         try (Connection conn = DatabaseConnection.connect()) {
             
-            // Step 1: Try to Insert
+            // attempt to insert record first
             try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
                 pstmt.setString(1, cleanPlate);
                 pstmt.setString(2, vehicle.getVehicleType());
-                pstmt.setBoolean(3, vehicle.isVip()); // FIXED: Uses actual VIP status from object
+                pstmt.setBoolean(3, vehicle.isVip());
                 pstmt.executeUpdate();
             }
             
-            // Step 2: Force Update (Matches DB to UI selection)
+            // force update to ensure latest settings are saved
             try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
                 pstmt.setBoolean(1, vehicle.isVip());
                 pstmt.setString(2, vehicle.getVehicleType());
@@ -44,12 +47,14 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
         }
     }
 
+    // retrieves the current unpaid fine total for a vehicle
     public double getAccumulatedFines(String plateNum) {
         syncTotalFines(plateNum); 
         
         String sql = "SELECT accumulated_fines FROM vehicles WHERE plate_num = ?";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setString(1, plateNum.trim().toUpperCase());
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -61,24 +66,28 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
         return 0.0;
     }
 
+    // recalculates unpaid fines from fines table and updates vehicle record
     public void syncTotalFines(String plateNum) {
+
         String cleanPlate = plateNum.trim().toUpperCase();
-        
         String sumSql = "SELECT SUM(amount) FROM fines WHERE plate_num = ? AND status = 'UNPAID'";
         double totalUnpaid = 0.0;
 
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sumSql)) {
+
             pstmt.setString(1, cleanPlate);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 totalUnpaid = rs.getDouble(1);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
             return; 
         }
 
+        // update accumulated fines field in vehicles table
         String updateSql = "UPDATE vehicles SET accumulated_fines = ? WHERE plate_num = ?";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
@@ -87,6 +96,7 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
             pstmt.setString(2, cleanPlate);
             int rows = pstmt.executeUpdate();
             
+            // if vehicle does not exist yet, create placeholder record
             if (rows == 0) {
                 forceInsertVehicleWithFine(cleanPlate, totalUnpaid);
             }
@@ -96,7 +106,9 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
         }
     }
 
+    // manually sets accumulated fines value
     public void updateAccumulatedFines(String plateNum, double amount) {
+
         String cleanPlate = plateNum.trim().toUpperCase();
         String updateSql = "UPDATE vehicles SET accumulated_fines = ? WHERE plate_num = ?";
         
@@ -107,6 +119,7 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
             pstmt.setString(2, cleanPlate);
             int rowsAffected = pstmt.executeUpdate();
 
+            // create record if vehicle is missing
             if (rowsAffected == 0) {
                 forceInsertVehicleWithFine(cleanPlate, amount);
             }
@@ -116,6 +129,7 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
         }
     }
 
+    // fallback method to ensure a vehicle record exists in DB
     private void forceInsertVehicleWithFine(String plateNum, double fineAmount) {
         String insertSql = "INSERT INTO vehicles(plate_num, type, is_vip, accumulated_fines) VALUES(?, 'Unknown', 0, ?)";
         try (Connection conn = DatabaseConnection.connect();
@@ -131,12 +145,9 @@ public class VehicleDAO implements GenericDAO<Vehicle, String> {
         }
     }
 
-    @Override
-    public Vehicle read(String plate) { return null; }
-    @Override
-    public void update(Vehicle vehicle) {}
-    @Override
-    public void delete(String id) {}
-    @Override
-    public List<Vehicle> getAll() { return new ArrayList<>(); }
+    // unused interface methods
+    @Override public Vehicle read(String plate) { return null; }
+    @Override public void update(Vehicle vehicle) {}
+    @Override public void delete(String id) {}
+    @Override public List<Vehicle> getAll() { return new ArrayList<>(); }
 }

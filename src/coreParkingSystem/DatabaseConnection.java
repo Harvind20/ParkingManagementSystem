@@ -5,14 +5,17 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+// handles connection setup and database initialization
 public class DatabaseConnection {
     public static final String URL = "jdbc:sqlite:parking_FINAL.db";
 
+    // establishes connection to SQLite database
     public static Connection connect() {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(URL);
             if (conn != null) {
+                // enable foreign key support for relational integrity
                 Statement stmt = conn.createStatement();
                 stmt.execute("PRAGMA foreign_keys = ON;");
                 stmt.close();
@@ -23,7 +26,10 @@ public class DatabaseConnection {
         return conn;
     }
 
+    // creates all required tables if they do not exist
     public static void initializeDB() {
+
+        // stores parking spot info and current occupancy
         String sqlSpots = "CREATE TABLE IF NOT EXISTS parking_spots ("
                 + " spot_id TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
@@ -32,6 +38,7 @@ public class DatabaseConnection {
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
+        // stores registered vehicles and accumulated fines
         String sqlVehicles = "CREATE TABLE IF NOT EXISTS vehicles ("
                 + " plate_num TEXT PRIMARY KEY,"
                 + " type TEXT NOT NULL,"
@@ -39,7 +46,7 @@ public class DatabaseConnection {
                 + " accumulated_fines REAL DEFAULT 0.0"
                 + ");";
 
-        // UPDATED: Added fine_scheme column
+        // active tickets issued at entry 
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
                 + " ticket_id TEXT PRIMARY KEY,"
                 + " plate_num TEXT NOT NULL,"
@@ -49,6 +56,7 @@ public class DatabaseConnection {
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
+        // stores fines issued for violations or overstaying
         String sqlFines = "CREATE TABLE IF NOT EXISTS fines ("
                 + " fine_id INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + " plate_num TEXT NOT NULL,"
@@ -59,6 +67,7 @@ public class DatabaseConnection {
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 
+        // stores completed exit and payment records
         String sqlReceipts = "CREATE TABLE IF NOT EXISTS receipts ("
                 + " receipt_id TEXT PRIMARY KEY,"
                 + " ticket_id TEXT NOT NULL,"
@@ -73,11 +82,13 @@ public class DatabaseConnection {
                 + " payment_method TEXT NOT NULL"
                 + ");";
 
+        // stores admin level configurations 
         String sqlAdmin = "CREATE TABLE IF NOT EXISTS admin_settings ("
                 + " setting_key TEXT PRIMARY KEY,"
                 + " setting_value TEXT NOT NULL"
                 + ");";
 
+        // ensures a default strategy exists on first run
         String sqlInsertStrategy = "INSERT OR IGNORE INTO admin_settings (setting_key, setting_value) VALUES ('fine_strategy', 'FIXED');";
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {

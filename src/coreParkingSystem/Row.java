@@ -2,20 +2,29 @@ package coreParkingSystem;
 import java.util.*;
 
 public class Row {
+
+    // list of parking spots belonging to this row
     private ArrayList<ParkingSpot> spots = new ArrayList<ParkingSpot>();
+
+    // fixed number of spots per row
     final int numOfSpots = 10;
 
     public Row(int rNum, int floorNum){
+        // create and assign spots when a row is initialized
         initializeParkingSpot(floorNum, rNum);
     }
     
-    public int getNumOfSpots(){return spots.size();}
+    public int getNumOfSpots(){ return spots.size(); }
     
     private void initializeParkingSpot(int floorNum, int rowNum){
+
+        // prefix used to generate unique spot IDs Floor-Row-Spot
         String idPrefix = floorNum + "-" + rowNum + "-";
         
         for (int i = 0; i < numOfSpots; i++){
             int spotNum = i + 1;
+
+            // assign spot types based on position within the row
             ParkingSpot.Type type;
             if (i < 3) {
                 type = ParkingSpot.Type.COMPACT;
@@ -30,6 +39,7 @@ public class Row {
                 type = ParkingSpot.Type.HANDICAPPED;
             }
 
+            // create spot and add to this row
             spots.add(new ParkingSpot(idPrefix + spotNum, type, spotNum));
         }
     }
