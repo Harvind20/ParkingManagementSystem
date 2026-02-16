@@ -1,5 +1,5 @@
 package EntryModule;
-
+import FineModule.FineManager;
 import UserInterface.ParkingTicketUI;
 import coreParkingSystem.DatabaseConnection;
 import coreParkingSystem.Floor;
@@ -128,6 +128,10 @@ public class EntryController {
 
     private void createHandicapViolationFine(String plate) {
         try {
+            FineManager fineManager = new FineManager();
+            double fineAmount = fineManager.calculateFine(25);
+
+
             Connection conn = DatabaseConnection.connect();
 
             String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
@@ -136,10 +140,9 @@ public class EntryController {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
             pst.setString(1, plate);
-            pst.setDouble(2, 100.0);
-            pst.setString(3, "Non-handicapped vehicle parked in HANDICAP spot");
+            pst.setDouble(2, fineAmount);
+            pst.setString(3, "Unauthorized parking in HANDICAP spot");
             pst.setString(4, "UNPAID");
-            pst.setString(5, timestamp);
 
             pst.executeUpdate();
 

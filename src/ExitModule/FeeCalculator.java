@@ -13,16 +13,14 @@ public class FeeCalculator {
         
         long hours = calculateDurationInHours(entryTime, exitTime);
         
-        if (vehicleType.equalsIgnoreCase("HandicappedVehicle")) {
+        if (vehicleType.equalsIgnoreCase("Handicapped")) {
 
-            // FREE if parked in handicap spot
-            if (spotType.equalsIgnoreCase("handicap") ||
-                spotType.equalsIgnoreCase("handicapped")) {
-                return 0.0;
+            // EXACT match with enum name
+            if (spotType.equalsIgnoreCase("HANDICAPPED")) {
+                return 0.0; // FREE
             }
 
-            // RM2/hour everywhere else
-            return hours * RATE_HANDICAPPED;
+            return hours * RATE_HANDICAPPED; // RM2/hr everywhere else
         }
 
         
@@ -70,11 +68,11 @@ public class FeeCalculator {
         System.out.println("=== Testing Simplified Fee Calculator ===");
         
         double fee = calculator.calculateParkingFee(
-            now.minusHours(3), now, "Handicapped", "HandicappedVehicle");
+            now.minusHours(3), now, "Handicapped", "Handicapped");
         System.out.println("1. Handicapped in Handicapped spot (3 hours): RM " + fee);
         
         fee = calculator.calculateParkingFee(
-            now.minusHours(3), now, "Regular", "HandicappedVehicle");
+            now.minusHours(3), now, "Regular", "Handicapped");
         System.out.println("2. Handicapped in Regular spot (3 hours): RM " + fee);
         
         fee = calculator.calculateParkingFee(
@@ -85,7 +83,7 @@ public class FeeCalculator {
             now.minusHours(3),
             now,
             "HANDICAP",
-            "HandicappedVehicle"
+            "Handicapped"
         );
         System.out.println("4. Handicapped in HANDICAP spot (3 hours): RM " + fee);
     }
