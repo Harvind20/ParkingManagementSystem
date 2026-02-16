@@ -116,13 +116,19 @@ public class EntryController {
         boolean isViolation = false;
         String reason = "";
 
-        // non-VIP using reserved spot
-        if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
-            isViolation = true;
-            reason = "Violation: Non-VIP in Reserved Spot";
-        } 
+        boolean isHandicapped = (vehicle instanceof HandicappedVehicle) || 
+                                vehicle.getVehicleType().equalsIgnoreCase("Handicapped") || 
+                                vehicle.getVehicleType().equalsIgnoreCase("HandicappedVehicle");
+
+        // FIX: Check if it is Handicapped OR VIP before issuing Reserved spot fine
+        if (spot.getSpotType() == ParkingSpot.Type.RESERVED) {
+            if (!vehicle.isVip() && !isHandicapped) {
+                isViolation = true;
+                reason = "Violation: Non-VIP in Reserved Spot";
+            }
+        }
         // non-handicapped driver using handicapped spot
-        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
+        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !isHandicapped) {
             isViolation = true;
             reason = "Violation: Unauthorized in Handicap Spot";
         }

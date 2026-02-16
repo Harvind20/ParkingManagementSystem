@@ -19,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ExitSystem {
-    // Core modules used by the exit system
     private FeeCalculator feeCalculator;
     private FineManager fineManager;
     private FineDAO fineDAO;
@@ -28,7 +27,6 @@ public class ExitSystem {
     
     private static Map<String, PendingExit> pendingExits = new HashMap<>();
     
-    // Optional test time (used for simulation/testing)
     private LocalDateTime testTime = null;
     
     public ExitSystem() {
@@ -44,7 +42,6 @@ public class ExitSystem {
         return LocalDateTime.now();
     }
     
-    // Initiate exit process
     public PendingExit initiateExit(String licensePlate) {
         vehicleDAO.syncTotalFines(licensePlate);
 
@@ -62,13 +59,14 @@ public class ExitSystem {
         LocalDateTime entryTime = ticket.getEntryTime();
         LocalDateTime initiationTime = getCurrentTime();
 
+        // Use DAO to get real vehicle type
+        String realVehicleType = vehicleDAO.getVehicleType(licensePlate);
+
         double parkingFee = feeCalculator.calculateParkingFee(
-            entryTime, initiationTime, spotTypeString, ticket.getVehicleType()
+            entryTime, initiationTime, spotTypeString, realVehicleType
         );
 
-        //Calculation for fines and amount dues
-
-        double calculatedSessionFine = calculateAllFines(ticket, spot, initiationTime, licensePlate);
+        double calculatedSessionFine = calculateAllFines(ticket, spot, initiationTime, licensePlate, realVehicleType);
 
         double totalDbFines = vehicleDAO.getAccumulatedFines(licensePlate);
         double recordedSessionFine = getExistingSessionFineAmount(licensePlate);
@@ -91,14 +89,11 @@ public class ExitSystem {
         return pending;
     }
     
-    //Check for fee updates
     public boolean checkForUpdates(String licensePlate) {
         PendingExit pending = pendingExits.get(licensePlate);
         if (pending == null) return false;
         
         LocalDateTime confirmationTime = getCurrentTime();
-
-        // Prevent unnecessary recalculation if only a short time passed
         if (Duration.between(pending.getInitiatedTime(), confirmationTime).toSeconds() < 1) return false;
 
         vehicleDAO.syncTotalFines(licensePlate);
@@ -108,11 +103,13 @@ public class ExitSystem {
         ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         String spotTypeString = (spot != null) ? spot.getSpotType().name() : "REGULAR";
 
+        String realVehicleType = vehicleDAO.getVehicleType(licensePlate);
+
         double currentParkingFee = feeCalculator.calculateParkingFee(
-            pending.getEntryTime(), confirmationTime, spotTypeString, ticket.getVehicleType()
+            pending.getEntryTime(), confirmationTime, spotTypeString, realVehicleType
         );
 
-        double calculatedSessionFine = calculateAllFines(ticket, spot, confirmationTime, licensePlate);
+        double calculatedSessionFine = calculateAllFines(ticket, spot, confirmationTime, licensePlate, realVehicleType);
         
         double totalDbFines = vehicleDAO.getAccumulatedFines(licensePlate);
         double recordedSessionFine = getExistingSessionFineAmount(licensePlate);
@@ -127,7 +124,6 @@ public class ExitSystem {
             calculatedSessionFine > pending.getCurrentFines()) {
             hasChanged = true;
             
-            //Updates Pending States
             pending.setParkingFee(currentParkingFee);
             pending.setCurrentFines(calculatedSessionFine);
             pending.setTotalFines(totalFinesToPay);
@@ -139,7 +135,6 @@ public class ExitSystem {
         return hasChanged;
     }
     
-    //Confirm Exit and Payment
     public Receipt confirmExit(String licensePlate, double parkingFeePayment, 
                                double finePayment, String paymentMethod) {
         
@@ -158,8 +153,6 @@ public class ExitSystem {
         double parkingFeePaidAmount = 0.0;
         double change = 0.0;
 
-
-        // Validate payment based on method
         if (paymentMethod.equalsIgnoreCase("CARD") && Math.abs(parkingFeePayment - parkingFee) < 0.01) {
             parkingFeePaidAmount = parkingFee;
         } else if (paymentMethod.equalsIgnoreCase("CASH") && parkingFeePayment >= parkingFee) {
@@ -185,7 +178,6 @@ public class ExitSystem {
 
         vehicleDAO.syncTotalFines(licensePlate);
 
-        //Release Parking Spot
         ParkingSpotDAO spotDAO = new ParkingSpotDAO();
         ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         String spotId = pending.getSpotId();
@@ -201,7 +193,6 @@ public class ExitSystem {
             receiptSpotType = spot.getSpotType().name();
         }
 
-        //Close Ticket
         Ticket ticket = pending.getTicket();
         ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
@@ -209,9 +200,11 @@ public class ExitSystem {
         double totalPaid = parkingFeePaidAmount + finesPaidNow;
         double remainingFines = vehicleDAO.getAccumulatedFines(licensePlate); 
 
+        String realVehicleType = vehicleDAO.getVehicleType(licensePlate);
+
         Receipt receipt = new Receipt(
             licensePlate, ticket.getEntryTime(), getCurrentTime(),
-            spotId, receiptSpotType, ticket.getVehicleType(),
+            spotId, receiptSpotType, realVehicleType,
             calculateHoursParked(ticket.getEntryTime(), getCurrentTime()),
             parkingFee, finesPaidNow, remainingFines,
             parkingFeePaidAmount, finesPaidNow, totalPaid, change,
@@ -252,7 +245,7 @@ public class ExitSystem {
         }
     }
 
-    private double calculateAllFines(Ticket ticket, ParkingSpot spot, LocalDateTime exitTime, String plate) {
+    private double calculateAllFines(Ticket ticket, ParkingSpot spot, LocalDateTime exitTime, String plate, String realVehicleType) {
         String schemeName = ticket.getFineSchemeAtEntry();
         FineScheme scheme = FineManager.getSchemeByName(schemeName);
 
@@ -260,15 +253,31 @@ public class ExitSystem {
         int hoursInt = (int) hoursParked;
         
         double totalFine = 0.0;
-        // Overstay
+        
+        // 1. Overstay Fine (Applies to everyone > 24 hours)
         totalFine += fineManager.calculateFine(scheme, hoursInt, false);
 
-        // Violations
+        // 2. Violation Fines
         boolean isViolation = false;
+        
         if (spot != null) {
             boolean isVip = getVipStatus(plate);
-            if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !isVip) isViolation = true;
-            if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) isViolation = true;
+            boolean isHandicapped = realVehicleType.equalsIgnoreCase("Handicapped") || 
+                                    realVehicleType.equalsIgnoreCase("HandicappedVehicle");
+            
+            // Reserved Spot Logic: Violation if NOT VIP AND NOT Handicapped
+            if (spot.getSpotType() == ParkingSpot.Type.RESERVED) {
+                if (!isVip && !isHandicapped) {
+                    isViolation = true;
+                }
+            }
+            
+            // Handicapped Spot Logic: Violation if NOT Handicapped
+            if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED) {
+                if (!isHandicapped) {
+                    isViolation = true;
+                }
+            }
         }
 
         if (isViolation) {
@@ -319,8 +328,7 @@ public class ExitSystem {
         private double totalDue;
         private LocalDateTime nextHourThreshold;
         private LocalDateTime twentyFourHourThreshold;
-
-        // DATA CLASS: PendingExit
+        
         public PendingExit(String licensePlate, Ticket ticket, String spotId,
                            LocalDateTime entryTime, LocalDateTime initiatedTime,
                            LocalDateTime lastCheckedTime, double parkingFee, 

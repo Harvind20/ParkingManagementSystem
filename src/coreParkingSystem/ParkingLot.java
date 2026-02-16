@@ -91,16 +91,25 @@ public class ParkingLot {
         String violationReason = "";
         
         boolean isVip = checkVipStatus(plate);
+        
+        // FIX: Retrieve real vehicle type from DB to ensure accuracy
+        String realType = vehicleDAO.getVehicleType(plate);
+        boolean isHandicapped = realType.equalsIgnoreCase("Handicapped") || 
+                                realType.equalsIgnoreCase("HandicappedVehicle");
 
-        // check reserved spot violation
-        if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !isVip) {
-            isViolation = true;
-            violationReason = "Violation: Non-VIP in Reserved Spot";
-        } 
-        // check handicapped spot violation
-        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) {
-            isViolation = true;
-            violationReason = "Violation: Unauthorized in Handicap Spot";
+        // check reserved spot violation (FIX: Allow if VIP OR Handicapped)
+        if (spot.getSpotType() == ParkingSpot.Type.RESERVED) {
+            if (!isVip && !isHandicapped) {
+                isViolation = true;
+                violationReason = "Violation: Non-VIP in Reserved Spot";
+            }
+        }
+        // check handicapped spot violation (FIX: Check against real DB type)
+        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED) {
+            if (!isHandicapped) {
+                isViolation = true;
+                violationReason = "Violation: Unauthorized in Handicap Spot";
+            }
         }
 
         FineManager fm = new FineManager();
