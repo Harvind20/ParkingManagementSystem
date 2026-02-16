@@ -8,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import javax.swing.*;
 
-
 public class ParkingRowBuilder {
 
     public static JPanel createRow(
@@ -26,21 +25,24 @@ public class ParkingRowBuilder {
         for(int i=0;i<10;i++){
             int spotNumber = i + 1;
 
+            // format spot id used in DB
             String dbSpotId = floor + "-" + rowIndex + "-" + spotNumber;
 
+            // check DB to see if spot is currently occupied
             boolean occupied = isSpotOccupied(dbSpotId);
 
-
-          
             String spotIdBackend = floor + "-" + rowIndex + "-" + spotNumber;
 
+            // get spot details from ParkingLot 
             ParkingLot lot = ParkingLot.getInstance();
             ParkingSpot.Status status = lot.getSpotStatus(spotIdBackend);
             ParkingSpot.Type typeEnum = lot.getSpotType(spotIdBackend);
             
+            // fallback to mock type if type not available
             String typeString = (typeEnum != null) ? typeEnum.toString() : getMockType(floor, i);
             boolean isOccupied = occupied;
 
+            // determine color based on type/status
             Color c;
             if(isOccupied) {
                 c = Color.RED;
@@ -51,7 +53,7 @@ public class ParkingRowBuilder {
             } else if(typeString.equals("VIP") || typeString.equals("RESERVED")) {
                 c = new Color(140,30,160);
             } else {
-                c = new Color(70,160,220); // HANDICAPPED
+                c = new Color(70,160,220); // handicapped
             }
 
             JPanel spot = new JPanel();
@@ -62,28 +64,35 @@ public class ParkingRowBuilder {
             }
             spot.setBorder(BorderFactory.createLineBorder(Color.WHITE,1));
 
+            // determine if user is allowed to select this spot
             boolean isAllowed = true;
             if(isOccupied) isAllowed = false;
             if((typeString.equals("VIP") || typeString.equals("RESERVED")) && !vipEnabled) isAllowed = false;
 
+            // visually disable unavailable spots
             if(!isAllowed) {
                 spot.setEnabled(false);
                 if(!isOccupied) spot.setBackground(c.darker());
             }
 
+            // only allow clicking if this row is used in SpotSelectionUI
             if(ui != null){
                 spot.addMouseListener(new java.awt.event.MouseAdapter() {
                     public void mouseClicked(java.awt.event.MouseEvent e) {
 
                         if(!spot.isEnabled()) return;
 
+                        // remove previous selection border
                         if(selectedSpotHolder[0] != null)
                             selectedSpotHolder[0].setBorder(
                                 BorderFactory.createLineBorder(Color.WHITE,1)
                             );
 
+                        // highlight newly selected spot
                         spot.setBorder(BorderFactory.createLineBorder(Color.YELLOW,3));
                         selectedSpotHolder[0] = spot;
+
+                        // open confirmation dialog
                         new ConfirmSpotDialog(
                             ui,
                             "Floor " + floor +
@@ -100,6 +109,7 @@ public class ParkingRowBuilder {
         return row;
     }
 
+    // fallback layout types if DB type is missing
     private static String getMockType(int floor, int col){
         if(floor == 1){
             if(col < 3) return "COMPACT";
@@ -116,35 +126,35 @@ public class ParkingRowBuilder {
         return "COMPACT";
     }
 
+    // checks DB to see if the given spot is occupied
     private static boolean isSpotOccupied(String spotId) {
-    boolean occupied = false;
+        boolean occupied = false;
 
-    try {
-        Connection conn = DatabaseConnection.connect();
+        try {
+            Connection conn = DatabaseConnection.connect();
 
-        String sql = "SELECT status FROM parking_spots WHERE spot_id=?";
-        PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setString(1, spotId);
+            String sql = "SELECT status FROM parking_spots WHERE spot_id=?";
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setString(1, spotId);
 
-        ResultSet rs = pst.executeQuery();
+            ResultSet rs = pst.executeQuery();
 
-        if (rs.next()) {
-            String status = rs.getString("status");
-            if ("OCCUPIED".equalsIgnoreCase(status)) {
-                occupied = true;
+            if (rs.next()) {
+                String status = rs.getString("status");
+                if ("OCCUPIED".equalsIgnoreCase(status)) {
+                    occupied = true;
+                }
             }
+
+            rs.close();
+            pst.close();
+            conn.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        rs.close();
-        pst.close();
-        conn.close();
-
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-
-    return occupied;
+        return occupied;
     }
 
 }
-

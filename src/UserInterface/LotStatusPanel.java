@@ -19,8 +19,10 @@ public class LotStatusPanel extends JPanel {
     boolean handicapEnabled = true;
     boolean vipEnabled = true;
 
+    // holds currently selected spot (shared reference)
     JPanel[] selectedSpotHolder = new JPanel[1];
     
+    // timer to auto-refresh the grid periodically
     private Timer refreshTimer;
 
     public LotStatusPanel() {
@@ -28,17 +30,19 @@ public class LotStatusPanel extends JPanel {
         setLayout(null);
         setBackground(ThemeColors.PRIMARY);
 
+        // return button back to main menu
         RoundedButton returnBtn = new RoundedButton("Return", ThemeColors.SECONDARY);
         returnBtn.setForeground(ThemeColors.PRIMARY);
         returnBtn.setBounds(30, 20, 120, 40);
         add(returnBtn);
 
         returnBtn.addActionListener(e -> {
-            if (refreshTimer != null) refreshTimer.stop();
+            if (refreshTimer != null) refreshTimer.stop(); // stop auto refresh
             new MainMenuUI().setVisible(true);
             SwingUtilities.getWindowAncestor(this).dispose();
         });
 
+        // floor selection dropdown
         floorDropdown = new JComboBox<>(new String[]{
                 "1st Floor",
                 "2nd Floor",
@@ -51,6 +55,7 @@ public class LotStatusPanel extends JPanel {
         floorWrapper.add(floorDropdown);
         add(floorWrapper);
 
+        // reload grid when floor changes
         floorDropdown.addActionListener(e -> {
             String selected = (String) floorDropdown.getSelectedItem();
 
@@ -61,12 +66,14 @@ public class LotStatusPanel extends JPanel {
             reloadGrid();
         });
 
+        // initial creation of parking rows
         topBlock = createRowBlock();
         bottomBlock = createRowBlock();
 
         add(topBlock);
         add(bottomBlock);
 
+        // legend explaining color meanings
         legendOccupied = createLegendBox(Color.RED, "Occupied");
         legendRegular = createLegendBox(new Color(0,180,90), "Regular");
         legendCompact = createLegendBox(new Color(30,100,20), "Compact");
@@ -79,16 +86,19 @@ public class LotStatusPanel extends JPanel {
         add(legendVIP);
         add(legendHandicap);
 
+        // reposition UI elements when window is resized
         addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 updateLayout();
             }
         });
 
+        // auto refresh every 5 seconds to keep spot status updated
         refreshTimer = new Timer(5000, e -> reloadGrid());
         refreshTimer.start();
     }
 
+    // recalculates positions for blocks and legends based on panel size
     private void updateLayout() {
         int panelW = getWidth();
         int panelH = getHeight();
@@ -107,6 +117,7 @@ public class LotStatusPanel extends JPanel {
         topBlock.setBounds(topX, topY, blockW, blockH);
         bottomBlock.setBounds(bottomX, bottomY, blockW, blockH);
 
+        // center the floor dropdown at top
         floorWrapper.setBounds(panelW/2 - 100, 20, 200, 40);
 
         int ly = panelH/2 - 60;
@@ -117,11 +128,12 @@ public class LotStatusPanel extends JPanel {
         legendHandicap.setBounds(40, ly+120, 180, 20);
     }
 
+    // rebuilds the parking rows (used when floor changes or auto-refresh triggers)
     private void reloadGrid() {
         remove(topBlock);
         remove(bottomBlock);
 
-        rowCounter = 1;
+        rowCounter = 1; // reset row numbering for selected floor
 
         topBlock = createRowBlock();
         bottomBlock = createRowBlock();
@@ -134,6 +146,7 @@ public class LotStatusPanel extends JPanel {
         repaint();
     }
 
+    // creates a 2-row block of parking spots using ParkingRowBuilder
     private JPanel createRowBlock(){
         RoundedPanel block = new RoundedPanel(40);
         block.setLayout(new GridLayout(2,1,0,0));
@@ -161,6 +174,7 @@ public class LotStatusPanel extends JPanel {
         return block;
     }
 
+    // small colored legend box with label text
     private JPanel createLegendBox(Color color,String text){
         JPanel p=new JPanel(null);
         p.setOpaque(false);

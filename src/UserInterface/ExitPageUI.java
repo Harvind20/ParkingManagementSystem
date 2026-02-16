@@ -13,6 +13,7 @@ public class ExitPageUI extends JFrame {
     private JLabel lblFee, lblFine, lblUnpaid, lblTotal;
     private JTextField plateField;
     
+    // holds the exit data retrieved from backend after search
     private PendingExit currentExitData;
 
     public ExitPageUI() {
@@ -22,15 +23,17 @@ public class ExitPageUI extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        // open in fullscreen
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        Color DARK = new Color(2,52,63);
-        Color CREAM = new Color(240,237,204);
+        Color DARK = ThemeColors.PRIMARY;
+        Color CREAM = ThemeColors.SECONDARY;
 
         JPanel background = new JPanel(new BorderLayout());
         background.setBackground(DARK);
         add(background);
 
+        // return to main menu
         JButton returnBtn = new RoundedButton("Return", CREAM);
         returnBtn.setForeground(DARK);
         returnBtn.setPreferredSize(new Dimension(100, 35));
@@ -56,6 +59,7 @@ public class ExitPageUI extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10,0,10,0);
 
+        // title card at the top
         RoundedPanel titleCard = new RoundedPanel(25);
         titleCard.setBackground(CREAM);
         titleCard.setPreferredSize(new Dimension(360,80));
@@ -83,6 +87,7 @@ public class ExitPageUI extends JFrame {
         JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         inputRow.setOpaque(false);
 
+        // plate input field wrapped in rounded panel
         RoundedPanel plateFieldWrapper = new RoundedPanel(20);
         plateFieldWrapper.setBackground(CREAM);
         plateFieldWrapper.setPreferredSize(new Dimension(260,50));
@@ -97,6 +102,7 @@ public class ExitPageUI extends JFrame {
         RoundedButton findBtn = new RoundedButton("FIND", CREAM);
         findBtn.setPreferredSize(new Dimension(90,50));
 
+        // search for active ticket and load exit details
         findBtn.addActionListener(e -> performSearch());
 
         inputRow.add(plateFieldWrapper);
@@ -105,6 +111,7 @@ public class ExitPageUI extends JFrame {
         gbc.gridy = 2;
         centerPanel.add(inputRow, gbc);
 
+        // summary card showing ticket and payment details
         RoundedPanel summaryCard = new RoundedPanel(25);
         summaryCard.setBackground(CREAM);
         summaryCard.setPreferredSize(new Dimension(400,300));
@@ -135,6 +142,7 @@ public class ExitPageUI extends JFrame {
 
         summaryCard.add(Box.createVerticalStrut(10));
         
+        // fee breakdown section
         lblFee = createText("Parking Fee: -");
         lblFine = createText("Current Fine: -");
         lblUnpaid = createText("Unpaid Fines: -");
@@ -161,6 +169,7 @@ public class ExitPageUI extends JFrame {
         RoundedButton payBtn = new RoundedButton("Pay Now", CREAM);
         payBtn.setPreferredSize(new Dimension(150,50));
 
+        // proceed to payment page using retrieved exit data
         payBtn.addActionListener(e -> {
             if (currentExitData == null) {
                 JOptionPane.showMessageDialog(this, "Please search for a vehicle first.");
@@ -175,21 +184,26 @@ public class ExitPageUI extends JFrame {
         centerPanel.add(payBtn, gbc);
     }
 
+    // helper method to create consistent text labels inside summary card
     private JLabel createText(String text){
         JLabel l = new JLabel(text);
         l.setFont(new Font("Arial", Font.BOLD, 13));
-        l.setForeground(new Color(2,52,63));
+        l.setForeground(ThemeColors.PRIMARY);
         return l;
     }
 
+    // performs backend lookup and fills summary card with exit details
     private void performSearch() {
         String plate = plateField.getText().trim();
         plate = plate.toUpperCase();
+
+        // validation before calling backend
         if (plate.isEmpty() || plate.contains("Placeholder")) {
             JOptionPane.showMessageDialog(this, "Please enter a valid License Plate.");
             return;
         }
 
+        // call exit system to retrieve ticket and fee details
         ExitSystem exitSystem = new ExitSystem();
         currentExitData = exitSystem.initiateExit(plate);
 
@@ -203,6 +217,7 @@ public class ExitPageUI extends JFrame {
         lblEntry.setText("Entry Time: " + currentExitData.getEntryTime().format(timeFmt));
         lblExit.setText("Exit Time: " + currentExitData.getInitiatedTime().format(timeFmt));
         
+        // calculate parked duration in hours 
         long durationMin = java.time.Duration.between(currentExitData.getEntryTime(), currentExitData.getInitiatedTime()).toMinutes();
         double durationHrs = Math.ceil(durationMin / 60.0);
         if(durationMin <= 0) durationHrs = 1.0;
@@ -210,6 +225,7 @@ public class ExitPageUI extends JFrame {
         lblDuration.setText(String.format("Hours Parked: %.0f hrs", durationHrs));
         lblVehicle.setText("Vehicle Type: " + currentExitData.getTicket().getVehicleType());
 
+        // display spot info 
         String spotDisplay = currentExitData.getSpotId();
         if ("Not Parked".equals(spotDisplay)) {
             lblSpot.setText("Spot: Not Parked");
@@ -217,6 +233,7 @@ public class ExitPageUI extends JFrame {
             lblSpot.setText("Spot: " + spotDisplay);
         }
         
+        // show fee and fine breakdown
         lblFee.setText(String.format("Parking Fee: RM %.2f", currentExitData.getParkingFee()));
         lblFine.setText(String.format("Current Fine: RM %.2f", currentExitData.getCurrentFines()));
         lblUnpaid.setText(String.format("Unpaid Fines: RM %.2f", currentExitData.getUnpaidFines()));
@@ -224,9 +241,5 @@ public class ExitPageUI extends JFrame {
         lblTotal.setText(String.format("Total Due: RM %.2f", currentExitData.getTotalDue()));
         
         JOptionPane.showMessageDialog(this, "Vehicle Found! Review summary below.");
-    }
-
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> new ExitPageUI().setVisible(true));
     }
 }

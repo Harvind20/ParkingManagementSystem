@@ -13,12 +13,14 @@ public class ReceiptPageUI extends JFrame {
         this((Receipt)null); 
     }
 
+    // constructor that loads the latest receipt using a license plate
     public ReceiptPageUI(String licensePlate) {
         this(new ReceiptDAO().getLatestReceipt(licensePlate));
         if (licensePlate != null && this.getTitle().equals("Receipt")) {
         }
     }
 
+    // main constructor that builds the receipt UI using receipt data
     public ReceiptPageUI(Receipt receipt) {
 
         setTitle("Receipt");
@@ -31,6 +33,7 @@ public class ReceiptPageUI extends JFrame {
         background.setBackground(ThemeColors.PRIMARY);
         add(background);
 
+        // main receipt card container
         RoundedPanel card = new RoundedPanel(30);
         card.setBackground(ThemeColors.SECONDARY); 
         card.setPreferredSize(new Dimension(760,620));
@@ -40,6 +43,7 @@ public class ReceiptPageUI extends JFrame {
         card.add(createCenter("Receipt", 20, true));
         card.add(Box.createVerticalStrut(20));
 
+        // basic info section for plate and date
         String plate = (receipt != null) ? receipt.getLicensePlate() : "No Record Found";
         String dateStr = (receipt != null) ? receipt.getExitTime().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) : "-";
 
@@ -59,6 +63,7 @@ public class ReceiptPageUI extends JFrame {
         card.add(infoBox);
         card.add(Box.createVerticalStrut(18));
 
+        // parking fee and fines breakdown
         RoundedPanel feeBox = createSection();
         feeBox.add(createCenter("Parking Fee Breakdown", 15, true));
         feeBox.add(Box.createVerticalStrut(10));
@@ -72,6 +77,7 @@ public class ReceiptPageUI extends JFrame {
         card.add(feeBox);
         card.add(Box.createVerticalStrut(18));
 
+        // payment method and total paid section
         RoundedPanel paymentBox = createSection();
 
         String method = (receipt != null) ? receipt.getPaymentMethod() : "-";
@@ -82,9 +88,11 @@ public class ReceiptPageUI extends JFrame {
 
         paymentBox.add(Box.createVerticalStrut(10));
 
+        // remaining unpaid fines if any
         String outstandingStr = (receipt != null) ? String.format("RM %.2f", receipt.getTotalFinesOutstanding()) : "-";
         paymentBox.add(createCenter("Outstanding Fines: " + outstandingStr, 14, false));
 
+        // show change only if user paid extra in cash
         if (receipt != null && receipt.getChange() > 0) {
             paymentBox.add(createCenter("Change: " + String.format("RM %.2f", receipt.getChange()), 14, false));
         }
@@ -95,6 +103,7 @@ public class ReceiptPageUI extends JFrame {
         card.add(createCenter("Thank you for using our parking facility.", 14, false));
         card.add(Box.createVerticalStrut(25));
 
+        // return to main menu
         RoundedButton closeBtn = new RoundedButton("Close", ThemeColors.PRIMARY);
         closeBtn.setForeground(ThemeColors.SECONDARY);
         closeBtn.setMaximumSize(new Dimension(160,45));
@@ -109,6 +118,7 @@ public class ReceiptPageUI extends JFrame {
         background.add(card);
     }
 
+    // helper method to create a styled section block
     private RoundedPanel createSection(){
         RoundedPanel section = new RoundedPanel(20);
         section.setBackground(ThemeColors.PRIMARY);
@@ -119,17 +129,12 @@ public class ReceiptPageUI extends JFrame {
         return section;
     }
 
+    // helper to create centered labels with consistent styling
     private JLabel createCenter(String text, int size, boolean bold){
         JLabel l = new JLabel(text);
         l.setAlignmentX(Component.CENTER_ALIGNMENT);
         l.setForeground(ThemeColors.SECONDARY);
         l.setFont(new Font("Arial", bold ? Font.BOLD : Font.PLAIN, size));
         return l;
-    }
-
-    public static void main(String[] args){
-        SwingUtilities.invokeLater(() -> {
-            new ReceiptPageUI("ABC1234").setVisible(true);
-        });
     }
 }

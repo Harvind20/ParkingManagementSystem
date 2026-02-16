@@ -14,10 +14,12 @@ public class ConfirmSpotDialog extends JDialog {
         setUndecorated(true);
         setBackground(new Color(0,0,0,0));
 
+        // transparent wrapper to center the card
         JPanel wrapper = new JPanel(new GridBagLayout());
         wrapper.setOpaque(false);
         add(wrapper);
 
+        // main dialog card
         RoundedPanel card = new RoundedPanel(25);
         card.setBackground(ThemeColors.SECONDARY);
         card.setPreferredSize(new Dimension(240,310));
@@ -28,6 +30,7 @@ public class ConfirmSpotDialog extends JDialog {
         JLabel t2 = createLabel("are about to");
         JLabel t3 = createLabel("park at");
 
+        // display selected spot id clearly
         JLabel spot = new JLabel(spotId);
         spot.setAlignmentX(Component.CENTER_ALIGNMENT);
         spot.setHorizontalAlignment(SwingConstants.CENTER);
@@ -47,10 +50,14 @@ public class ConfirmSpotDialog extends JDialog {
         cancel.setMaximumSize(new Dimension(140,38));
         confirm.setMaximumSize(new Dimension(140,38));
 
+        // close dialog without doing anything
         cancel.addActionListener(e -> dispose());
 
+        // confirm parking and send request to backend
         confirm.addActionListener(e -> {
             Vehicle vehicle = null;
+
+            // get vehicle object from parent SpotSelectionUI
             if (parent instanceof SpotSelectionUI) {
                 vehicle = ((SpotSelectionUI) parent).currentVehicle;
             }
@@ -60,6 +67,7 @@ public class ConfirmSpotDialog extends JDialog {
                 return;
             }
 
+            // convert UI spot format to backend format
             String backendSpotId = spotId.replace("Floor ", "")
                                          .replace(" Row ", "-")
                                          .replace(" Spot ", "-");
@@ -67,6 +75,7 @@ public class ConfirmSpotDialog extends JDialog {
             EntryController controller = new EntryController();
             String result = controller.attemptPark(vehicle, backendSpotId);
 
+            // if success, close both dialogs
             if (result.startsWith("SUCCESS")) {
                 dispose(); 
                 parent.dispose(); 
@@ -90,6 +99,7 @@ public class ConfirmSpotDialog extends JDialog {
         wrapper.add(card);
     }
 
+    // helper method to create centered labels with consistent styling
     private JLabel createLabel(String text){
         JLabel l=new JLabel(text);
         l.setAlignmentX(Component.CENTER_ALIGNMENT);

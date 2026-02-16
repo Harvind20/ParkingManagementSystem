@@ -3,13 +3,14 @@ import java.awt.*;
 import javax.swing.*;
 
 public class RoundedPanel extends JPanel {
-    int r;
+    int r; // radius for rounded corners
 
     public RoundedPanel(int r){
         this.r = r;
-        setOpaque(false);
+        setOpaque(false); // allow custom rounded painting
     }
 
+    // custom painting to draw a rounded rectangle panel background
     protected void paintComponent(Graphics g){
         Graphics2D g2 = (Graphics2D) g;
         g2.setColor(getBackground());

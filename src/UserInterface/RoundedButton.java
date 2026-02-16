@@ -4,7 +4,7 @@ import javax.swing.*;
 
 public class RoundedButton extends JButton {
 
-    Color color;
+    Color color; // background color used to paint the rounded button
 
     public RoundedButton(String text, Color c){
         super(text);
@@ -16,6 +16,7 @@ public class RoundedButton extends JButton {
         setFont(new Font("Arial", Font.BOLD, 14));
     }
 
+    // custom paint to draw a rounded rectangle button
     protected void paintComponent(Graphics g){
         Graphics2D g2 = (Graphics2D) g;
         g2.setColor(color);
