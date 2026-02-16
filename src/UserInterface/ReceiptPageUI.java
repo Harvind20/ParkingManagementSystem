@@ -81,10 +81,11 @@ public class ReceiptPageUI extends JFrame {
         paymentBox.add(createCenter("Total Paid: " + totalPaidStr, 14, false));
 
         paymentBox.add(Box.createVerticalStrut(10));
-        paymentBox.add(createCenter("Balance: RM -", 14, false));
-        paymentBox.add(createCenter("Outstanding Fines: RM -", 14, false));
 
-        if (receipt != null && receipt.getPaymentMethod().equalsIgnoreCase("CASH") && receipt.getChange() > 0) {
+        String outstandingStr = (receipt != null) ? String.format("RM %.2f", receipt.getTotalFinesOutstanding()) : "-";
+        paymentBox.add(createCenter("Outstanding Fines: " + outstandingStr, 14, false));
+
+        if (receipt != null && receipt.getChange() > 0) {
             paymentBox.add(createCenter("Change: " + String.format("RM %.2f", receipt.getChange()), 14, false));
         }
 
