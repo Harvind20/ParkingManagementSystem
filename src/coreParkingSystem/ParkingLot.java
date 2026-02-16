@@ -14,16 +14,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+// central system controller managing floors, spots, tickets and fine updates
+// implemented as a Singleton to ensure only one parking system instance exists
 public class ParkingLot {
+
     private ArrayList<Floor> floors = new ArrayList<>();
     private TicketDAO ticketDAO = new TicketDAO(); 
     private ParkingSpotDAO spotDAO = new ParkingSpotDAO();
     private VehicleDAO vehicleDAO = new VehicleDAO();
 
+    // scheduler used to automatically recalculate fines over time
     private ScheduledExecutorService fineScheduler;
     
     final int floorNumber = 3;
 
+    // private constructor for Singleton pattern
     private ParkingLot(){
         DatabaseConnection.initializeDB(); 
         initializeFloors();
@@ -38,6 +43,7 @@ public class ParkingLot {
         return InstanceHolder.INSTANCE;
     }
 
+    // starts background task that updates fines every hour
     private void startFineUpdateScheduler() {
         fineScheduler = Executors.newSingleThreadScheduledExecutor();
         fineScheduler.scheduleAtFixedRate(this::updateAllFines, 1, 1, TimeUnit.HOURS);
@@ -50,6 +56,7 @@ public class ParkingLot {
         }
     }
 
+    // iterates through all occupied spots and recalculates fines
     private void updateAllFines() {
         System.out.println("[System] Running Hourly Fine Update...");
         LocalDateTime now = LocalDateTime.now();
@@ -68,6 +75,7 @@ public class ParkingLot {
         }
     }
 
+    // calculates updated fine for a specific vehicle based on duration and violations
     private void processFineUpdateForVehicle(String plate, ParkingSpot spot, LocalDateTime now) {
         Ticket ticket = ticketDAO.findActiveByPlate(plate);
         if (ticket == null) return;
@@ -84,10 +92,13 @@ public class ParkingLot {
         
         boolean isVip = checkVipStatus(plate);
 
+        // check reserved spot violation
         if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !isVip) {
             isViolation = true;
             violationReason = "Violation: Non-VIP in Reserved Spot";
-        } else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) {
+        } 
+        // check handicapped spot violation
+        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) {
             isViolation = true;
             violationReason = "Violation: Unauthorized in Handicap Spot";
         }
@@ -95,9 +106,12 @@ public class ParkingLot {
         FineManager fm = new FineManager();
         double newFineAmount = 0.0;
 
+        // violation fines are applied immediately
         if (isViolation) {
             newFineAmount = fm.calculateFine(scheme, hoursParked, true);
-        } else {
+        } 
+        // otherwise apply overstay fine after grace period
+        else {
             newFineAmount = fm.calculateFine(scheme, hoursParked, false);
             violationReason = "Overstay Fee (>24h)";
         }
@@ -107,18 +121,21 @@ public class ParkingLot {
         }
     }
 
+    // updates existing unpaid fine or inserts new fine if none exists
     private void updateFineInDB(String plate, double amount, String reason) {
         String checkSql = "SELECT fine_id FROM fines WHERE plate_num = ? AND status = 'UNPAID'";
         String updateSql = "UPDATE fines SET amount = ?, reason = ? WHERE fine_id = ?";
         String insertSql = "INSERT INTO fines(plate_num, amount, reason, status, date_issued) VALUES(?,?,?,?,datetime('now'))";
 
         try (Connection conn = DatabaseConnection.connect()) {
-            // Check existence
+
+            // check if an unpaid fine already exists
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
                 checkStmt.setString(1, plate);
                 ResultSet rs = checkStmt.executeQuery();
                 
                 if (rs.next()) {
+                    // update existing fine
                     int fineId = rs.getInt("fine_id");
                     try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
                         updateStmt.setDouble(1, amount);
@@ -127,6 +144,7 @@ public class ParkingLot {
                         updateStmt.executeUpdate();
                     }
                 } else {
+                    // insert new fine record
                     try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
                         insertStmt.setString(1, plate);
                         insertStmt.setDouble(2, amount);
@@ -136,6 +154,8 @@ public class ParkingLot {
                     }
                 }
             }
+
+            // sync accumulated fine total for vehicle
             vehicleDAO.syncTotalFines(plate);
             
         } catch (Exception e) {
@@ -143,6 +163,7 @@ public class ParkingLot {
         }
     }
 
+    // checks VIP status from database for reserved spot validation
     private boolean checkVipStatus(String plate) {
         String sql = "SELECT is_vip FROM vehicles WHERE plate_num = ?";
         try (Connection conn = DatabaseConnection.connect();
@@ -154,16 +175,18 @@ public class ParkingLot {
         return false;
     }
 
+    // persists vehicle details
     public void saveVehicle(Vehicle v) {
         vehicleDAO.create(v);
         System.out.println("[DB] Vehicle saved: " + v.getLicensePlate());
     }
 
-
+    // generates next ticket sequence number for same plate
     public int getNextSequenceNumber(String plateNum) {
         return ticketDAO.getTicketCount(plateNum) + 1;
     }
     
+    // saves new ticket record
     public void saveTicket(Ticket ticket) {
         if (ticket != null) {
             ticketDAO.create(ticket); 
@@ -171,10 +194,12 @@ public class ParkingLot {
         }
     }
 
+    // retrieves active ticket for a vehicle
     public Ticket getTicketByPlate(String plate) {
         return ticketDAO.findActiveByPlate(plate);
     }
 
+    // marks ticket as completed during exit
     public void closeTicket(String ticketId, String plate) {
         ticketDAO.closeTicket(ticketId); 
         System.out.println("[DB] Ticket marked COMPLETED for " + plate);
@@ -185,6 +210,7 @@ public class ParkingLot {
         if(t != null) closeTicket(t.getTicketID(), plate);
     }
 
+    // builds parking structure and inserts spots into database
     private void initializeFloors(){
         for(int i = 0; i < floorNumber; i++){
             Floor floor = new Floor(i+1);
@@ -200,6 +226,7 @@ public class ParkingLot {
     
     public ArrayList<Floor> getFloors(){ return floors; }
     
+    // updates spot status and persists change
     public void setSpotStatus(String sID, ParkingSpot.Status status){
         ParkingSpot spot = getSpotById(sID);
         if (spot != null) {
@@ -208,6 +235,7 @@ public class ParkingLot {
         }
     }
 
+    // retrieves spot status
     public ParkingSpot.Status getSpotStatus(String sID){
         ParkingSpot spot = spotDAO.read(sID);
         return (spot != null) ? spot.getSpotStatus() : null;
@@ -218,6 +246,7 @@ public class ParkingLot {
         return (spot != null) ? spot.getSpotType() : null;
     }
 
+    // converts string ID floor-row-spot into actual object reference
     public ParkingSpot getSpotById(String sID) {
         String[] idData = sID.split("\\-");
         if(idData.length != 3) return null;
@@ -232,6 +261,7 @@ public class ParkingLot {
         return null;
     }
 
+    // updates which vehicle is occupying the spot
     public void updateSpotOccupancy(ParkingSpot spot){
         spotDAO.updateCurrentlyParkedVehicle(spot);
     }

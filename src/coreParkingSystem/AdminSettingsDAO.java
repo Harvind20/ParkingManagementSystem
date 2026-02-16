@@ -6,8 +6,11 @@ import java.util.List;
 
 import EntryModule.Vehicle;
 
+// DAO responsible for reading and updating admin system settings from the database
+// currently used to store and retrieve the active fine calculation strategy
 public class AdminSettingsDAO implements GenericDAO<Object,Integer>{
 
+    // retrieves the currently selected fine strategy from admin_settings table
     public String getCurrentStrategy() {
         String sql = "SELECT setting_value FROM admin_settings WHERE setting_key = 'fine_strategy'";
         try (Connection conn = DatabaseConnection.connect();
@@ -19,9 +22,11 @@ public class AdminSettingsDAO implements GenericDAO<Object,Integer>{
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        // fallback default if nothing found
         return "FIXED";
     }
 
+    // updates the stored fine strategy when admin selects a new scheme
     public void setStrategy(String newStrategy) {
         String sql = "UPDATE admin_settings SET setting_value = ? WHERE setting_key = 'fine_strategy'";
         try (Connection conn = DatabaseConnection.connect();
@@ -34,6 +39,7 @@ public class AdminSettingsDAO implements GenericDAO<Object,Integer>{
         }
     }
 
+    // unused GenericDAO methods
     @Override public void create(Object t) {}
     @Override public Object read(Integer id) { return null; }
     @Override public void update(Object t) {}

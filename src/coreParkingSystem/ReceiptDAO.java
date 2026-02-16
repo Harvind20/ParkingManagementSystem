@@ -6,13 +6,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// DAO responsible for persisting and retrieving receipt records from the database
 public class ReceiptDAO implements GenericDAO<Receipt, String> {
 
     @Override
     public void create(Receipt receipt) {
+        // stores a completed payment transaction into the receipts table
         String sql = "INSERT INTO receipts(receipt_id, ticket_id, plate_num, spot_id, entry_time, exit_time, hours_parked, parking_fee, fine_amount, total_paid, payment_method) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setString(1, receipt.getReceiptNumber());
             pstmt.setString(2, receipt.getTicketID()); 
             pstmt.setString(3, receipt.getLicensePlate());
@@ -25,11 +28,13 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
             pstmt.setDouble(10, receipt.getAmountPaid());
             pstmt.setString(11, receipt.getPaymentMethod());
             pstmt.executeUpdate();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    // retrieves the most recent receipt for a given vehicle plate
     public Receipt getLatestReceipt(String plateNum) {
         String sql = "SELECT r.*, v.type AS v_type, s.type AS s_type " +
                      "FROM receipts r " +
@@ -46,17 +51,18 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                // Parse Times
+                // reconstruct stored timestamps back into LocalDateTime
                 LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entry_time"));
                 LocalDateTime exitTime = LocalDateTime.parse(rs.getString("exit_time"));
 
+                // fallback labels in case joins return null
                 String vType = rs.getString("v_type");
                 if(vType == null) vType = "Vehicle";
                 
                 String sType = rs.getString("s_type");
                 if(sType == null) sType = "Parking Spot";
 
-                // Reconstruct Receipt Object
+                // rebuild Receipt object from database values
                 return new Receipt(
                     rs.getString("plate_num"),
                     entryTime,
@@ -83,6 +89,7 @@ public class ReceiptDAO implements GenericDAO<Receipt, String> {
         return null;
     }
 
+    // unused CRUD methods 
     @Override public Receipt read(String id) { return null; }
     @Override public void update(Receipt t) {}
     @Override public void delete(String id) {}
