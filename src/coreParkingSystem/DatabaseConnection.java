@@ -39,11 +39,13 @@ public class DatabaseConnection {
                 + " accumulated_fines REAL DEFAULT 0.0"
                 + ");";
 
+        // UPDATED: Added fine_scheme column
         String sqlTickets = "CREATE TABLE IF NOT EXISTS tickets ("
                 + " ticket_id TEXT PRIMARY KEY,"
                 + " plate_num TEXT NOT NULL,"
                 + " entry_time TEXT NOT NULL,"
                 + " status TEXT DEFAULT 'ACTIVE'," 
+                + " fine_scheme TEXT DEFAULT 'FIXED'," 
                 + " FOREIGN KEY (plate_num) REFERENCES vehicles(plate_num)"
                 + ");";
 

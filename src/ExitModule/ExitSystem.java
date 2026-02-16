@@ -3,12 +3,16 @@ package ExitModule;
 import EntryModule.Ticket;
 import FineModule.FineManager;
 import FineModule.FineScheme;
+import coreParkingSystem.DatabaseConnection;
 import coreParkingSystem.FineDAO;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.ParkingSpotDAO;
 import coreParkingSystem.ReceiptDAO;
 import coreParkingSystem.VehicleDAO;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -49,35 +53,32 @@ public class ExitSystem {
             return null;
         }
         
-        String spotId;
-        String spotTypeString;
-        
-        if (spot != null) {
-            spotId = spot.getSpotID();
-            spotTypeString = spot.getSpotType().name();
-        } else {
-            spotId = "Not Parked";
-            spotTypeString = "REGULAR"; 
-        }
+        String spotId = (spot != null) ? spot.getSpotID() : "Not Parked";
+        String spotTypeString = (spot != null) ? spot.getSpotType().name() : "REGULAR";
         
         LocalDateTime entryTime = ticket.getEntryTime();
         LocalDateTime initiationTime = getCurrentTime();
-        
+
         double parkingFee = feeCalculator.calculateParkingFee(
             entryTime, initiationTime, spotTypeString, ticket.getVehicleType()
         );
-        
-        double currentFines = calculateFines(ticket, initiationTime);
-        double unpaidFines = vehicleDAO.getAccumulatedFines(licensePlate);
-        double totalFines = currentFines + unpaidFines;
-        double totalDue = parkingFee + totalFines;
+
+        double calculatedSessionFine = calculateAllFines(ticket, spot, initiationTime, licensePlate);
+
+        double totalDbFines = vehicleDAO.getAccumulatedFines(licensePlate);
+        double recordedSessionFine = getExistingSessionFineAmount(licensePlate);
+
+        double historicalFines = Math.max(0, totalDbFines - recordedSessionFine);
+
+        double totalFinesToPay = historicalFines + calculatedSessionFine;
+        double totalDue = parkingFee + totalFinesToPay;
         
         LocalDateTime nextHourThreshold = calculateNextHourThreshold(entryTime, initiationTime);
         LocalDateTime twentyFourHourThreshold = entryTime.plusHours(24);
         
         PendingExit pending = new PendingExit(
             licensePlate, ticket, spotId, entryTime, initiationTime, initiationTime,
-            parkingFee, currentFines, unpaidFines, totalFines, totalDue,
+            parkingFee, calculatedSessionFine, historicalFines, totalFinesToPay, totalDue,
             nextHourThreshold, twentyFourHourThreshold
         );
         
@@ -90,35 +91,37 @@ public class ExitSystem {
         if (pending == null) return false;
         
         LocalDateTime confirmationTime = getCurrentTime();
-        LocalDateTime initiationTime = pending.getInitiatedTime();
-        
-        if (Duration.between(initiationTime, confirmationTime).toSeconds() < 1) return false;
-        
+        if (Duration.between(pending.getInitiatedTime(), confirmationTime).toSeconds() < 1) return false;
+
         vehicleDAO.syncTotalFines(licensePlate);
 
         Ticket ticket = pending.getTicket();
         ParkingSpotDAO spotDAO = new ParkingSpotDAO();
         ParkingSpot spot = spotDAO.findByPlate(licensePlate);
-        
         String spotTypeString = (spot != null) ? spot.getSpotType().name() : "REGULAR";
 
         double currentParkingFee = feeCalculator.calculateParkingFee(
-            pending.getEntryTime(), confirmationTime, 
-            spotTypeString, ticket.getVehicleType()
+            pending.getEntryTime(), confirmationTime, spotTypeString, ticket.getVehicleType()
         );
+
+        double calculatedSessionFine = calculateAllFines(ticket, spot, confirmationTime, licensePlate);
         
-        double currentFines = calculateFines(ticket, confirmationTime);
-        double unpaidFines = vehicleDAO.getAccumulatedFines(licensePlate);
-        double currentTotalDue = currentParkingFee + currentFines + unpaidFines;
+        double totalDbFines = vehicleDAO.getAccumulatedFines(licensePlate);
+        double recordedSessionFine = getExistingSessionFineAmount(licensePlate);
+        double historicalFines = Math.max(0, totalDbFines - recordedSessionFine);
+        
+        double totalFinesToPay = historicalFines + calculatedSessionFine;
+        double currentTotalDue = currentParkingFee + totalFinesToPay;
         
         boolean hasChanged = false;
 
-        if (Math.abs(currentParkingFee - pending.getParkingFee()) > 0.01 || currentFines > pending.getCurrentFines()) {
+        if (Math.abs(currentParkingFee - pending.getParkingFee()) > 0.01 || 
+            calculatedSessionFine > pending.getCurrentFines()) {
             hasChanged = true;
             
             pending.setParkingFee(currentParkingFee);
-            pending.setCurrentFines(currentFines);
-            pending.setTotalFines(currentFines + unpaidFines);
+            pending.setCurrentFines(calculatedSessionFine);
+            pending.setTotalFines(totalFinesToPay);
             pending.setTotalDue(currentTotalDue);
             pending.setLastCheckedTime(confirmationTime);
             pending.setNextHourThreshold(calculateNextHourThreshold(pending.getEntryTime(), confirmationTime));
@@ -130,51 +133,35 @@ public class ExitSystem {
     public Receipt confirmExit(String licensePlate, double parkingFeePayment, 
                                double finePayment, String paymentMethod) {
         
-        ParkingSpotDAO spotDAO = new ParkingSpotDAO();
-        ParkingSpot spot = spotDAO.findByPlate(licensePlate);
         PendingExit pending = pendingExits.get(licensePlate);
-        if (pending == null) {
-            return null;
-        }
+        if (pending == null) return null;
+        if (checkForUpdates(licensePlate)) return null; 
         
-        if (checkForUpdates(licensePlate)) {
-            return null; 
-        }
-        
-        LocalDateTime confirmationTime = getCurrentTime();
-        Ticket ticket = pending.getTicket();
-        String spotId = pending.getSpotId();
-        
-        double parkingFee = pending.getParkingFee();
         double totalFinesAvailable = pending.getTotalFines();
-        
+
         if (totalFinesAvailable >= 500.0 && finePayment < totalFinesAvailable) {
-            System.out.println("BLOCK: Fines exceed RM500. Full payment required.");
+            System.out.println("BLOCK: Total fines (" + totalFinesAvailable + ") exceed RM500. Full payment required.");
             return null;
         }
 
+        double parkingFee = pending.getParkingFee();
         double parkingFeePaidAmount = 0.0;
         double change = 0.0;
-        
-        if (paymentMethod.equalsIgnoreCase("CARD")) {
-            if (Math.abs(parkingFeePayment - parkingFee) < 0.01) {
-                parkingFeePaidAmount = parkingFee;
-            } else {
-                return null;
-            }
-        } else if (paymentMethod.equalsIgnoreCase("CASH")) {
-            if (parkingFeePayment >= parkingFee) {
-                parkingFeePaidAmount = parkingFee;
-                change = parkingFeePayment - parkingFee;
-            } else {
-                return null;
-            }
+
+        if (paymentMethod.equalsIgnoreCase("CARD") && Math.abs(parkingFeePayment - parkingFee) < 0.01) {
+            parkingFeePaidAmount = parkingFee;
+        } else if (paymentMethod.equalsIgnoreCase("CASH") && parkingFeePayment >= parkingFee) {
+            parkingFeePaidAmount = parkingFee;
+            change = parkingFeePayment - parkingFee;
         } else {
             return null;
         }
-        
+
         double finesPaidNow = 0.0;
-        
+        double currentSessionFine = pending.getCurrentFines();
+
+        updateFineRecordToFinalAmount(licensePlate, currentSessionFine);
+
         if (finePayment > 0) {
             if (Math.abs(finePayment - totalFinesAvailable) < 0.01) {
                 finesPaidNow = totalFinesAvailable;
@@ -182,30 +169,26 @@ public class ExitSystem {
             } else {
                 return null;
             }
-        } else {
-            double currentNewFine = pending.getCurrentFines();
-            if (currentNewFine > 0) {
-                 fineDAO.createFine(licensePlate, currentNewFine, "Overstay/Violation");
-            }
         }
-        
+
         vehicleDAO.syncTotalFines(licensePlate);
 
-        String receiptSpotType = "NONE";
+        ParkingSpotDAO spotDAO = new ParkingSpotDAO();
+        ParkingSpot spot = spotDAO.findByPlate(licensePlate);
+        String spotId = pending.getSpotId();
+        String receiptSpotType = "REGULAR";
+
         if (spot != null && !spotId.equals("Not Parked")) {
             ParkingLot.getInstance().setSpotStatus(spotId, ParkingSpot.Status.AVAILABLE);
-            
             ParkingSpot systemSpot = ParkingLot.getInstance().getSpotById(spotId);
             if (systemSpot != null) {
                 systemSpot.setCurrentlyParkedVehicleID(null); 
                 ParkingLot.getInstance().updateSpotOccupancy(systemSpot); 
             }
-            
             receiptSpotType = spot.getSpotType().name();
-        } else {
-            receiptSpotType = "REGULAR"; 
         }
 
+        Ticket ticket = pending.getTicket();
         ParkingLot.getInstance().closeTicket(ticket.getTicketID(), licensePlate);
         pendingExits.remove(licensePlate);
         
@@ -213,39 +196,82 @@ public class ExitSystem {
         double remainingFines = vehicleDAO.getAccumulatedFines(licensePlate); 
 
         Receipt receipt = new Receipt(
-            licensePlate,
-            ticket.getEntryTime(),
-            confirmationTime,
-            spotId,
-            receiptSpotType,
-            ticket.getVehicleType(),
-            calculateHoursParked(ticket.getEntryTime(), confirmationTime),
-            parkingFee,
-            finesPaidNow,
-            remainingFines,
-            parkingFeePaidAmount,
-            finesPaidNow,
-            totalPaid,
-            change,
-            paymentMethod,
-            ticket.getTicketID(),
-            true
+            licensePlate, ticket.getEntryTime(), getCurrentTime(),
+            spotId, receiptSpotType, ticket.getVehicleType(),
+            calculateHoursParked(ticket.getEntryTime(), getCurrentTime()),
+            parkingFee, finesPaidNow, remainingFines,
+            parkingFeePaidAmount, finesPaidNow, totalPaid, change,
+            paymentMethod, ticket.getTicketID(), true
         );
         
         receiptDAO.create(receipt);
         return receipt;
     }
 
-    private LocalDateTime calculateNextHourThreshold(LocalDateTime entryTime, LocalDateTime currentTime) {
-        Duration duration = Duration.between(entryTime, currentTime);
-        long hoursParked = (long) Math.ceil(duration.toMinutes() / 60.0);
-        return entryTime.plusMinutes(hoursParked * 60);
+    private double getExistingSessionFineAmount(String plate) {
+        String sql = "SELECT amount FROM fines WHERE plate_num = ? AND status = 'UNPAID' ORDER BY fine_id DESC LIMIT 1";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble("amount");
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return 0.0;
     }
 
-    private double calculateFines(Ticket ticket, LocalDateTime exitTime) {
+    private void updateFineRecordToFinalAmount(String plate, double amount) {
+        if (amount <= 0) return;
+
+        if (getExistingSessionFineAmount(plate) > 0) {
+            String sql = "UPDATE fines SET amount = ? WHERE plate_num = ? AND status = 'UNPAID' AND fine_id = (SELECT fine_id FROM fines WHERE plate_num=? AND status='UNPAID' ORDER BY fine_id DESC LIMIT 1)";
+            try (Connection conn = DatabaseConnection.connect();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setDouble(1, amount);
+                pstmt.setString(2, plate);
+                pstmt.setString(3, plate);
+                pstmt.executeUpdate();
+            } catch (Exception e) { e.printStackTrace(); }
+        } else {
+            fineDAO.createFine(plate, amount, "Exit Fine (Overstay/Violation)");
+        }
+    }
+
+    private double calculateAllFines(Ticket ticket, ParkingSpot spot, LocalDateTime exitTime, String plate) {
+        String schemeName = ticket.getFineSchemeAtEntry();
+        FineScheme scheme = FineManager.getSchemeByName(schemeName);
+
         double hoursParked = calculateHoursParked(ticket.getEntryTime(), exitTime);
-        if (hoursParked <= 24) return 0.0;
-        return fineManager.calculateFine((int) hoursParked);
+        int hoursInt = (int) hoursParked;
+        
+        double totalFine = 0.0;
+        // Overstay
+        totalFine += fineManager.calculateFine(scheme, hoursInt, false);
+
+        // Violations
+        boolean isViolation = false;
+        if (spot != null) {
+            boolean isVip = getVipStatus(plate);
+            if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !isVip) isViolation = true;
+            if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !ticket.getVehicleType().equalsIgnoreCase("Handicapped")) isViolation = true;
+        }
+
+        if (isViolation) {
+            totalFine += fineManager.calculateFine(scheme, hoursInt, true);
+        }
+        return totalFine;
+    }
+    
+    private boolean getVipStatus(String plate) {
+        String sql = "SELECT is_vip FROM vehicles WHERE plate_num = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getBoolean("is_vip");
+        } catch (Exception e) {}
+        return false;
     }
 
     private double calculateHoursParked(LocalDateTime entryTime, LocalDateTime exitTime) {
@@ -253,6 +279,12 @@ public class ExitSystem {
         double totalMinutes = duration.toMinutes();
         if (totalMinutes <= 0) return 1.0;
         return Math.ceil(totalMinutes / 60.0);
+    }
+
+    private LocalDateTime calculateNextHourThreshold(LocalDateTime entryTime, LocalDateTime currentTime) {
+        Duration duration = Duration.between(entryTime, currentTime);
+        long hoursParked = (long) Math.ceil(duration.toMinutes() / 60.0);
+        return entryTime.plusMinutes(hoursParked * 60);
     }
 
     public void setFineScheme(FineScheme scheme) {
@@ -268,8 +300,8 @@ public class ExitSystem {
         private LocalDateTime lastCheckedTime;
         private double parkingFee;
         private double currentFines;
-        private double unpaidFines;
-        private double totalFines;
+        private double unpaidFines; 
+        private double totalFines;  
         private double totalDue;
         private LocalDateTime nextHourThreshold;
         private LocalDateTime twentyFourHourThreshold;

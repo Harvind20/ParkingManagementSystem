@@ -13,7 +13,7 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
 
     @Override
     public void create(Ticket ticket) {
-        String sql = "INSERT INTO tickets(ticket_id, plate_num, entry_time, status) VALUES(?,?,?,?)";
+        String sql = "INSERT INTO tickets(ticket_id, plate_num, entry_time, status, fine_scheme) VALUES(?,?,?,?,?)";
         
         try (Connection conn = DatabaseConnection.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -21,6 +21,12 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
             pstmt.setString(2, ticket.getLicensePlate());
             pstmt.setString(3, ticket.getEntryTime().format(DB_FORMATTER));
             pstmt.setString(4, "ACTIVE");
+            
+            // Save the scheme active at entry
+            String scheme = ticket.getFineSchemeAtEntry();
+            if (scheme == null) scheme = "FIXED";
+            pstmt.setString(5, scheme);
+            
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Ticket Create Error: " + e.getMessage());
@@ -36,9 +42,15 @@ public class TicketDAO implements GenericDAO<Ticket, String> {
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 LocalDateTime time = LocalDateTime.parse(rs.getString("entry_time"), DB_FORMATTER);
+                
+                // Retrieve the scheme from DB
+                String scheme = rs.getString("fine_scheme");
+                if (scheme == null) scheme = "FIXED";
+
                 Ticket t = new Ticket.TicketBuilder()
                         .addPlate(rs.getString("plate_num"))
                         .addTime(time)
+                        .addFineScheme(scheme)
                         .build();
                 t.setTicketID(rs.getString("ticket_id"));
                 return t;

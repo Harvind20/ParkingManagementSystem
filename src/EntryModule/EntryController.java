@@ -1,16 +1,14 @@
 package EntryModule;
+
 import FineModule.FineManager;
+import FineModule.FineScheme;
 import UserInterface.ParkingTicketUI;
-import coreParkingSystem.DatabaseConnection;
+import coreParkingSystem.FineDAO;
 import coreParkingSystem.Floor;
 import coreParkingSystem.ParkingLot;
 import coreParkingSystem.ParkingSpot;
 import coreParkingSystem.Row;
 import coreParkingSystem.VehicleDAO;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
@@ -50,23 +48,28 @@ public class EntryController {
         if (!isEntryAllowed(vehicle, type)) {
              if (vehicle instanceof SUV && type == ParkingSpot.Type.COMPACT) 
                  return "ERROR: SUV cannot park in Compact spot";
-             if (type == ParkingSpot.Type.RESERVED) 
-                 return "ERROR: This spot is Reserved for VIPs";
-             
+
              return "ERROR: Vehicle type not allowed in this spot";
         }
 
         lot.saveVehicle(vehicle);
+
+        String currentSchemeName = "FIXED";
+        if (FineManager.getCurrentScheme() instanceof FineModule.HourlyFine) {
+            currentSchemeName = "HOURLY";
+        } else if (FineManager.getCurrentScheme() instanceof FineModule.ProgressiveFine) {
+            currentSchemeName = "PROGRESSIVE";
+        }
 
         Ticket ticket = new Ticket.TicketBuilder()
             .addPlate(vehicle.getLicensePlate())
             .addTime(vehicle.getEntryTime())
             .addVehicleType(vehicle.getVehicleType())
             .addSequenceNumber(lot.getNextSequenceNumber(vehicle.getLicensePlate()))
+            .addFineScheme(currentSchemeName)
             .build();
         
         vehicle.setTicketId(ticket.toString());
-
         lot.saveTicket(ticket);
 
         lot.setSpotStatus(selectedSpotID, ParkingSpot.Status.OCCUPIED);
@@ -74,15 +77,8 @@ public class EntryController {
         spot.setCurrentlyParkedVehicleID(vehicle.getLicensePlate());
         lot.updateSpotOccupancy(spot);
 
-        // Fine if non-handicap parked in handicap spot
-        if (type == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
-            createHandicapViolationFine(vehicle.getLicensePlate());
-        }
+        checkAndIssueViolationFine(vehicle, spot, currentSchemeName);
 
-        if (type == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
-            createReservedFine(vehicle.getLicensePlate());
-        }
-        
         vehicleDAO.syncTotalFines(vehicle.getLicensePlate());
 
         SwingUtilities.invokeLater(() -> 
@@ -94,66 +90,34 @@ public class EntryController {
 
     private boolean isEntryAllowed(Vehicle v, ParkingSpot.Type spotType) {
         if (v instanceof HandicappedVehicle) return true;
+        // Strict Block: SUV in Compact
         if (v instanceof SUV && spotType == ParkingSpot.Type.COMPACT) return false;
         return true; 
     }
 
-    private void createReservedFine(String plate) {
-        try {
-            Connection conn = DatabaseConnection.connect();
+    private void checkAndIssueViolationFine(Vehicle vehicle, ParkingSpot spot, String schemeName) {
+        boolean isViolation = false;
+        String reason = "";
 
-            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement pst = conn.prepareStatement(sql);
-            
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-            pst.setString(1, plate);
-            pst.setDouble(2, 50.0);
-            pst.setString(3, "Non-VIP parked in RESERVED spot");
-            pst.setString(4, "UNPAID");
-            pst.setString(5, timestamp);
-
-            pst.executeUpdate();
-
-            pst.close();
-            conn.close();
-
-            System.out.println("Fine created for " + plate);
-            new VehicleDAO().syncTotalFines(plate);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (spot.getSpotType() == ParkingSpot.Type.RESERVED && !vehicle.isVip()) {
+            isViolation = true;
+            reason = "Violation: Non-VIP in Reserved Spot";
+        } 
+        else if (spot.getSpotType() == ParkingSpot.Type.HANDICAPPED && !(vehicle instanceof HandicappedVehicle)) {
+            isViolation = true;
+            reason = "Violation: Unauthorized in Handicap Spot";
         }
-    }
 
-    private void createHandicapViolationFine(String plate) {
-        try {
-            FineManager fineManager = new FineManager();
-            double fineAmount = fineManager.calculateFine(25);
-
-
-            Connection conn = DatabaseConnection.connect();
-
-            String sql = "INSERT INTO fines (plate_num, amount, reason, status, date_issued) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement pst = conn.prepareStatement(sql);
-
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-            pst.setString(1, plate);
-            pst.setDouble(2, fineAmount);
-            pst.setString(3, "Unauthorized parking in HANDICAP spot");
-            pst.setString(4, "UNPAID");
-
-            pst.executeUpdate();
-
-            pst.close();
-            conn.close();
-
-            System.out.println("Handicap violation fine issued.");
-            new VehicleDAO().syncTotalFines(plate);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (isViolation) {
+            FineManager fm = new FineManager();
+            FineScheme scheme = FineManager.getSchemeByName(schemeName);
+            double initialFine = fm.calculateFine(scheme, 1, true); 
+            
+            if (initialFine > 0) {
+                FineDAO fineDAO = new FineDAO();
+                fineDAO.createFine(vehicle.getLicensePlate(), initialFine, reason);
+                System.out.println("Immediate Violation Fine Issued: RM " + initialFine);
+            }
         }
     }
 }
